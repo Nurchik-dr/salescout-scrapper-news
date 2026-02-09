@@ -5,14 +5,32 @@ type Props = {
 
 export default function Header({ loading, onRefresh }: Props) {
   return (
-    <div className="header">
-      <div className="header-inner">
-        <div className="logo">informburo</div>
+    <header className="topbar">
+      <div className="topbar-inner">
+        {/* <div className="brand">
+          <span className="brand-i">i</span>
+          <span className="brand-text">informburo</span>
+        </div>
 
-        <button className="refresh-btn" onClick={onRefresh}>
+        <nav className="nav">
+          <a className="nav-link" href="#">
+            НОВОСТИ
+          </a>
+          <a className="nav-link" href="#">
+            ИСТОРИИ
+          </a>
+          <a className="nav-link" href="#">
+            ИНТЕРВЬЮ
+          </a>
+          <a className="nav-link" href="#">
+            YOUTUBE
+          </a>
+        </nav> */}
+
+        <button className="refresh-btn" onClick={onRefresh} disabled={loading}>
           {loading ? "Updating..." : "🔄 Update"}
         </button>
       </div>
-    </div>
+    </header>
   );
 }

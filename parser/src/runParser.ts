@@ -14,6 +14,7 @@ const negativeWords = [
   "опрокинулся",
   "погиб",
   "погибли",
+  "задыхается",
   "смерть",
   "умер",
   "убийство",
@@ -33,12 +34,11 @@ const newsSchema = new Schema(
     source: { type: String, required: true },
     title: { type: String, required: true },
     text: { type: String, required: false },
-
-    image: { type: String, required: false }, // ✅ сохраняем фото
-
+    image: { type: String, required: false },
     url: { type: String, required: true },
     publishedAt: { type: String, required: true },
-
+    
+    category: { type: String, required: false }, // ✅ ADD
     sentiment: {
       type: String,
       enum: ["positive", "neutral", "negative"],
@@ -47,6 +47,8 @@ const newsSchema = new Schema(
   },
   { collection: "news", timestamps: true }
 );
+
+
 
 const NewsModel =
   mongoose.models.News || mongoose.model("News", newsSchema);
@@ -57,15 +59,8 @@ const NewsModel =
 function getSentiment(item: NewsItem): "positive" | "neutral" | "negative" {
   const content = `${item.title} ${item.text}`.toLowerCase();
 
-  // ❌ если есть хоть одно негативное слово → NEGATIVE
-  if (negativeWords.some((w) => content.includes(w))) {
-    return "negative";
-  }
-
-  // ✅ если есть позитив → POSITIVE
-  if (positiveWords.some((w) => content.includes(w))) {
-    return "positive";
-  }
+  if (negativeWords.some((w) => content.includes(w))) return "negative";
+  if (positiveWords.some((w) => content.includes(w))) return "positive";
 
   return "neutral";
 }

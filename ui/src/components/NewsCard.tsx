@@ -9,31 +9,26 @@ function isNew(publishedAt: string) {
   return diff < 1000 * 60 * 60 * 6;
 }
 
+const FALLBACK_IMG =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="640" height="420">
+    <rect width="100%" height="100%" fill="#eef1f5"/>
+    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+      font-family="Arial" font-size="42" fill="#9aa3ad">NEWS</text>
+  </svg>`);
+
 export default function NewsCard({ item }: Props) {
-  const hasImage =
-    item.image && item.image.startsWith("http");
+  const img =
+    item.image && item.image.startsWith("http") ? item.image : FALLBACK_IMG;
 
   return (
-    <div className="news-card">
-      {/* IMAGE */}
+    <article className="news-card">
       <div className="news-image">
-        {hasImage ? (
-          <img
-            src={
-              item.image && item.image.startsWith("http")
-                ? item.image
-                : "/no-image.png"
-            }
-          />
-
-        ) : (
-          <div className="news-image-empty" />
-        )}
+        <img src={img} alt={item.title} loading="lazy" />
       </div>
 
-      {/* CONTENT */}
       <div className="news-content">
-        {/* DATE */}
         <p className="news-date">
           {new Date(item.publishedAt).toLocaleString("ru-RU", {
             day: "2-digit",
@@ -43,31 +38,19 @@ export default function NewsCard({ item }: Props) {
           })}
         </p>
 
-        {/* TITLE */}
-        <h2 className="news-title">
+        <h3 className="news-title">
           {item.title}
-          {isNew(item.publishedAt) && (
-            <span className="badge">NEW</span>
-          )}
-        </h2>
+          {isNew(item.publishedAt) && <span className="badge">NEW</span>}
+        </h3>
 
-        {/* TEXT */}
         <p className="news-text">
-          {item.text
-            ? item.text.slice(0, 120) + "..."
-            : "Описание отсутствует"}
+          {item.text ? item.text.slice(0, 140) + "..." : "Описание отсутствует"}
         </p>
 
-        {/* LINK */}
-        <a
-          className="news-link"
-          href={item.url}
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a className="news-link" href={item.url} target="_blank" rel="noreferrer">
           Читать →
         </a>
       </div>
-    </div>
+    </article>
   );
 }

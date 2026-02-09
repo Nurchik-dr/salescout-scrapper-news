@@ -5,4 +5,6 @@ export type RawNews = {
   rawUrl?: string;
   rawDate?: string;
   rawImage?: string;
+
+  rawCategory?: string;
 };

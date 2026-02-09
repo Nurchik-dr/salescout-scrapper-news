@@ -35,65 +35,99 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  // ==============================
-  // ✅ ALL NEWS (pagination)
-  // ==============================
-  app.get("/api/news", async (req, res) => {
-    const page = Number(req.query.page || 1);
-    const limit = Number(req.query.limit || 15);
+  // ==========================================
+  // ✅ ONLY LAST 7 DAYS FILTER
+  // ==========================================
+  function last7DaysFilter() {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
 
-    const items = await NewsModel.find()
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
-
-    res.json({ items });
-  });
-
-  // ==============================
-  // ✅ POSITIVE NEWS = all кроме negative
-  // ==============================
-  app.get("/api/news/positive", async (req, res) => {
-    const page = Number(req.query.page || 1);
-    const limit = Number(req.query.limit || 15);
-
-    const items = await NewsModel.find({
-      sentiment: { $ne: "negative" },
-    })
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
-
-    res.json({ items });
-  });
-
-  // ==============================
-  // ✅ REFRESH
-  // ==============================
-
-app.post("/api/refresh", async (_req, res) => {
-  try {
-    console.log("🔄 Refresh started...");
-
-    execSync("npm run start", {
-      cwd: path.join(__dirname, "../../scraper"),
-      stdio: "inherit",
-    });
-
-    execSync("npm run start", {
-      cwd: path.join(__dirname, "../../parser"),
-      stdio: "inherit",
-    });
-
-    console.log("✅ Refresh done!");
-    res.json({ ok: true });
-  } catch (e) {
-    console.log("❌ Refresh failed:", e);
-    res.status(500).json({ ok: false });
+    return {
+      publishedAt: { $gte: weekAgo.toISOString() },
+    };
   }
-});
+
+  // ==========================================
+  // ✅ ALL NEWS (last 7 days)
+  // GET /api/news?page=1&limit=15
+  // ==========================================
+  app.get("/api/news", async (req, res) => {
+    try {
+      const page = Math.max(1, Number(req.query.page || 1));
+      const limit = Math.max(1, Math.min(50, Number(req.query.limit || 15)));
+
+      const filter = last7DaysFilter();
+
+      const [items, total] = await Promise.all([
+        NewsModel.find(filter)
+          .sort({ publishedAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean(),
+
+        NewsModel.countDocuments(filter),
+      ]);
+
+      res.json({ page, limit, total, items });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to load news" });
+    }
+  });
+
+  // ==========================================
+  // ✅ POSITIVE NEWS (last 7 days + no negative)
+  // GET /api/news/positive?page=1&limit=15
+  // ==========================================
+  app.get("/api/news/positive", async (req, res) => {
+    try {
+      const page = Math.max(1, Number(req.query.page || 1));
+      const limit = Math.max(1, Math.min(50, Number(req.query.limit || 15)));
+
+      const filter = {
+        ...last7DaysFilter(),
+        sentiment: { $ne: "negative" },
+      };
+
+      const [items, total] = await Promise.all([
+        NewsModel.find(filter)
+          .sort({ publishedAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean(),
+
+        NewsModel.countDocuments(filter),
+      ]);
+
+      res.json({ page, limit, total, items });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to load positive news" });
+    }
+  });
+
+  // ==========================================
+  // ✅ REFRESH
+  // ==========================================
+  app.post("/api/refresh", async (_req, res) => {
+    try {
+      console.log("🔄 Refresh started...");
+
+      execSync("npm run start", {
+        cwd: path.resolve(process.cwd(), "../scraper"),
+        stdio: "inherit",
+      });
+
+      execSync("npm run start", {
+        cwd: path.resolve(process.cwd(), "../parser"),
+        stdio: "inherit",
+      });
+
+      console.log("✅ Refresh done!");
+      res.json({ ok: true });
+    } catch (e) {
+      console.log("❌ Refresh failed:", e);
+      res.status(500).json({ ok: false });
+    }
+  });
 
   const port = Number(process.env.PORT || 4000);
   app.listen(port, () => {
@@ -101,4 +135,7 @@ app.post("/api/refresh", async (_req, res) => {
   });
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error("❌ Server failed:", err);
+  process.exit(1);
+});

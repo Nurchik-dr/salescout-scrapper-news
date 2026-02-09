@@ -5,6 +5,7 @@ export type RawNews = {
   rawUrl?: string;
   rawDate?: string;
   rawImage?: string;
+  rawCategory?: string;
 };
 
 export type NewsItem = {
@@ -14,4 +15,5 @@ export type NewsItem = {
   image?: string | null;
   url: string;
   publishedAt: string;
+  category?: string;
 };

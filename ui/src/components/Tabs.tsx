@@ -1,25 +1,26 @@
+// ui/src/components/Tabs.tsx
+
 type Props = {
   mode: "all" | "positive";
-  setMode: (m: "all" | "positive") => void;
+  setMode: (v: "all" | "positive") => void;
 };
 
 export default function Tabs({ mode, setMode }: Props) {
   return (
     <div className="tabs">
       <button
-        className={mode === "all" ? "tab active" : "tab"}
+        className={`tab ${mode === "all" ? "active" : ""}`}
         onClick={() => setMode("all")}
       >
         All News
       </button>
 
       <button
-        className={mode === "positive" ? "tab active" : "tab"}
+        className={`tab ${mode === "positive" ? "active" : ""}`}
         onClick={() => setMode("positive")}
       >
-        Positive news
+        {mode === "positive" ? "⏳ Loading..." : "Positive news"}
       </button>
     </div>
   );
 }
-
