@@ -1,0 +1,18 @@
+image: atlassian/default-image:latest
+
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Deploy to server
+          deployment: production
+          script:
+            - pipe: atlassian/ssh-run:0.4.1
+              variables:
+                SSH_USER: 'salescout'
+                SERVER: '94.131.87.203'
+                COMMAND: |
+                  cd ~/salescout-instagram-scrapper
+                  git pull origin main
+                  sudo docker-compose down
+                  sudo docker-compose up -d --build

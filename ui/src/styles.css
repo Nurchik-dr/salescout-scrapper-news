@@ -1,0 +1,181 @@
+/* ================================
+   GLOBAL
+================================ */
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f6f9;
+  color: #111;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ================================
+   HEADER (как Informburo)
+================================ */
+.header {
+  width: 100%;
+  background: white;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 14px 0;
+}
+
+.header-inner {
+  width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 26px;
+  font-weight: 900;
+  color: #d60000;
+}
+
+.refresh-btn {
+  background: #d60000;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.refresh-btn:hover {
+  opacity: 0.9;
+}
+
+/* ================================
+   TABS
+================================ */
+.tabs {
+  width: 1100px;
+  margin: 18px auto;
+  display: flex;
+  gap: 12px;
+}
+
+.tab {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-weight: 700;
+  cursor: pointer;
+  background: #f0f0f0;
+}
+
+.tab.active {
+  background: white;
+  border: 2px solid #d60000;
+}
+
+/* ================================
+   GRID (точно как Informburo)
+================================ */
+.grid {
+  width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+/* ================================
+   NEWS CARD
+================================ */
+.news-card {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: 0.2s;
+}
+
+.news-card:hover {
+  transform: translateY(-4px);
+}
+
+.news-image img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
+}
+
+/* ================================
+   CARD CONTENT
+================================ */
+.news-content {
+  padding: 14px;
+}
+
+.news-date {
+  font-size: 12px;
+  color: #777;
+  margin: 0 0 8px;
+}
+
+.news-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 10px;
+  line-height: 1.25;
+}
+
+.news-text {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+  margin: 0 0 12px;
+}
+
+.news-link {
+  font-size: 14px;
+  font-weight: 800;
+  color: #d60000;
+}
+
+.news-link:hover {
+  text-decoration: underline;
+}
+
+/* ================================
+   BADGE NEW
+================================ */
+.badge {
+  background: #d60000;
+  color: white;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  margin-left: 8px;
+}
+
+/* ================================
+   LOAD MORE BUTTON
+================================ */
+.load-more {
+  text-align: center;
+  margin: 25px 0;
+}
+
+.load-more button {
+  background: #d60000;
+  color: white;
+  border: none;
+  padding: 14px 26px;
+  font-weight: 800;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.load-more button:hover {
+  opacity: 0.9;
+}
