@@ -1,4 +1,4 @@
-// ui/src/components/Tabs.tsx
+// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/ui/src/components/Tabs.tsx
 
 type Props = {
   mode: "all" | "positive";

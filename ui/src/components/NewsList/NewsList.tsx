@@ -1,6 +1,7 @@
-import { NewsItem } from "../types/news";
-import NewsCard from "./NewsCard";
-
+// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/ui/src/components/NewsList.tsx
+import { NewsItem } from "../../types/news";
+import NewsCard from "../NewsCard/NewsCard";
+import "./NewsList.css"
 type Props = {
   news: NewsItem[];
 };

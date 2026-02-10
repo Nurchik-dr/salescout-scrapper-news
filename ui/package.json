@@ -22,7 +22,7 @@
     "react-dom": "^19.2.0",
     "react-phone-input-2": "^2.15.1",
     "react-redux": "^9.2.0",
-    "react-router-dom": "^7.11.0",
+    "react-router-dom": "^7.13.0",
     "sass": "^1.97.1",
     "socket.io-client": "^4.8.3"
   },
@@ -45,4 +45,3 @@
     "vite": "^7.2.4"
   }
 }
-

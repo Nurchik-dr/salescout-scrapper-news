@@ -143,10 +143,7 @@ export async function scrapeInformburo(): Promise<RawNews[]> {
     const href = $(el).attr("href") || "";
     const title = $(el).text().trim();
 
-    if (!title) return;
-    if (title.length < 20) return;
-
-    // ✅ убрали /sport/
+    if (!title || title.length < 20) return;
     if (
       !href.includes("/novosti/") &&
       !href.includes("/interview/") &&
@@ -164,8 +161,8 @@ export async function scrapeInformburo(): Promise<RawNews[]> {
       source: "informburo.kz",
       rawTitle: title,
       rawUrl: link,
-      rawDate: new Date().toISOString(),
       rawCategory: detectInformburoCategory(link),
+      rawDate: new Date().toISOString(),
     });
   });
 
@@ -173,14 +170,57 @@ export async function scrapeInformburo(): Promise<RawNews[]> {
     new Map(items.map((x) => [x.rawUrl, x])).values()
   ).slice(0, 100);
 
-  const withImages: RawNews[] = [];
+  const withFullText: RawNews[] = [];
+
   for (const it of unique) {
-    const img = it.rawUrl ? await extractOgImage(it.rawUrl) : undefined;
-    withImages.push({ ...it, rawImage: img });
+    if (!it.rawUrl) continue;
+
+    // заход в статью
+    try {
+      const res = await axios.get(it.rawUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+        },
+      });
+
+      const $$ = cheerio.load(res.data);
+
+      // 📍 полный текст
+      const paragraphs = $$(".news-text, .article__text, article p")
+        .map((_, p) => $$(p).text().trim())
+        .get()
+        .filter(Boolean);
+
+      const fullText = paragraphs.join("\n\n");
+
+      // 📸 og:image
+      const image =
+        $$('meta[property="og:image"]').attr("content") ||
+        $$("article img").first().attr("src") ||
+        undefined;
+
+      // 🗓 дата статьи
+      const date =
+        $$('meta[property="article:published_time"]').attr("content") ||
+        $$("time").attr("datetime") ||
+        it.rawDate;
+
+      withFullText.push({
+        ...it,
+        rawText: fullText || "",
+        rawImage: image,
+        rawDate: date,
+      });
+    } catch {
+      // пропустить если не удалось
+      continue;
+    }
   }
 
-  return withImages;
+  return withFullText;
 }
+
 
 /* ===========================
    ✅ KHABAR.KZ
@@ -290,13 +330,25 @@ export async function scrapePositivNews(): Promise<RawNews[]> {
     const href = $(el).attr("href") || "";
     const title = $(el).text().trim();
 
-    // титулы короткие не нужны
     if (!title || title.length < 20) return;
-
-    // ссылки на статьи обычно содержат www.positivnews.ru
     if (!href.includes("positivnews.ru")) return;
 
-    const link = href.startsWith("http") ? href : "https://positivnews.ru" + href;
+    // ❌ выкидываем категории, теги, главную
+    if (
+      href.includes("/category/") ||
+      href.includes("/tag/") ||
+      href === "https://positivnews.ru/" ||
+      href === "https://positivnews.ru"
+    ) {
+      return;
+    }
+
+    // ✅ оставляем только реальные статьи (обычно с датой)
+    if (!href.match(/\/\d{4}\/\d{2}\/\d{2}\//)) return;
+
+    const link = href.startsWith("http")
+      ? href
+      : "https://positivnews.ru" + href;
 
     items.push({
       source: "positivnews.ru",
@@ -309,7 +361,7 @@ export async function scrapePositivNews(): Promise<RawNews[]> {
 
   const unique = Array.from(
     new Map(items.map((x) => [x.rawUrl, x])).values()
-  ).slice(0, 80);
+  ).slice(0, 50);
 
   const withImages: RawNews[] = [];
   for (const it of unique) {
@@ -319,6 +371,7 @@ export async function scrapePositivNews(): Promise<RawNews[]> {
 
   return withImages;
 }
+
 
 
 /* ===========================

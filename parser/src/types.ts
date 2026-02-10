@@ -1,3 +1,5 @@
+export type Category = "general" | "sports" | "tech" | "business" | "science";
+
 export type RawNews = {
   source: string;
   rawTitle?: string;
@@ -15,5 +17,6 @@ export type NewsItem = {
   image?: string | null;
   url: string;
   publishedAt: string;
-  category?: string;
+  category?: Category;
+  sentiment?: "positive" | "neutral" | "negative";
 };

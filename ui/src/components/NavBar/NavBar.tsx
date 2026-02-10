@@ -1,4 +1,6 @@
-import "./NavBar.css"
+// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/ui/src/components/NavBar/NavBar.tsx
+import "./NavBar.css";
+
 type Props = {
   active: string;
   setActive: (v: string) => void;
@@ -6,20 +8,32 @@ type Props = {
   onRefresh: () => void;
 };
 
-export default function Navbar({ active, setActive, loading,onRefresh }: Props) {
-  const links = ["Новости", "Спорт", "Интервью", "Истории"];
+const links = [
+  { label: "Все", value: "all" },
+  { label: "Новости", value: "general" },
+  { label: "Спорт", value: "sports" },
+  { label: "Технологии", value: "tech" },
+  { label: "Бизнес", value: "business" },
+  { label: "Наука", value: "science" },
+];
 
+export default function Navbar({
+  active,
+  setActive,
+  loading,
+  onRefresh,
+}: Props) {
   return (
     <div className="topbar">
       <div className="navbar-inner">
         <div className="navbar-links">
           {links.map((item) => (
             <button
-              key={item}
-              className={active === item ? "nav-link active" : "nav-link"}
-              onClick={() => setActive(item)}
+              key={item.value}
+              className={active === item.value ? "nav-link active" : "nav-link"}
+              onClick={() => setActive(item.value)}
             >
-              {item}
+              {item.label}
             </button>
           ))}
         </div>
@@ -31,5 +45,3 @@ export default function Navbar({ active, setActive, loading,onRefresh }: Props) 
     </div>
   );
 }
-
-

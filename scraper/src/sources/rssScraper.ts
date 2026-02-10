@@ -1,5 +1,6 @@
-
 import Parser from "rss-parser";
+import axios from "axios";
+import * as cheerio from "cheerio";
 import { RawNews } from "../types";
 
 const rssParser = new Parser({
@@ -7,66 +8,99 @@ const rssParser = new Parser({
     item: [
       ["media:content", "mediaContent"],
       ["media:thumbnail", "mediaThumbnail"],
+      ["content:encoded", "contentEncoded"],
       ["enclosure", "enclosure"],
     ],
   },
 });
 
+/* ===========================
+   HELPERS
+=========================== */
+
 function cleanTitle(title: string) {
-  return title
-    .replace(/•.*$/g, "") // убираем всё после •
-    .replace(/#\S+/g, "") // убираем хэштеги
-    .trim();
+  return title.replace(/•.*$/g, "").replace(/#\S+/g, "").trim();
 }
 
 function extractImage(item: any): string | undefined {
-  // 1) enclosure
   if (item.enclosure?.url) return item.enclosure.url;
-
-  // 2) media:content
   if (item.mediaContent?.$?.url) return item.mediaContent.$.url;
-  if (item.mediaContent?.url) return item.mediaContent.url;
-
-  // 3) media:thumbnail
   if (item.mediaThumbnail?.$?.url) return item.mediaThumbnail.$.url;
-  if (item.mediaThumbnail?.url) return item.mediaThumbnail.url;
 
-  // 4) fallback image field
-  if (item.image?.url) return item.image.url;
-
-  // ✅ 5) вытаскиваем img из HTML внутри content/description
-  const html = item.content || item["content:encoded"] || item.summary || "";
-
+  const html = item.contentEncoded || item.content || item.summary || "";
   const match = html.match(/<img[^>]+src="([^">]+)"/);
 
-  if (match?.[1]) return match[1];
-
-  return undefined;
+  return match?.[1];
 }
+
+// ✅ вытаскиваем полный текст со страницы
+async function fetchFullText(url: string): Promise<string> {
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+      },
+    });
+
+    const $ = cheerio.load(res.data);
+
+    // берём все абзацы статьи
+    const paragraphs = $("article p")
+      .map((_, el) => $(el).text().trim())
+      .get()
+      .filter(Boolean);
+
+    if (paragraphs.length === 0) return "";
+
+    return paragraphs.slice(0, 20).join("\n\n");
+  } catch {
+    return "";
+  }
+}
+
+/* ===========================
+   MAIN RSS SCRAPER
+=========================== */
 
 export async function scrapeRss(url: string): Promise<RawNews[]> {
   const feed = await rssParser.parseURL(url);
 
-  return (feed.items || [])
-    .map((item: any) => {
-      const title = item.title ? cleanTitle(item.title) : undefined;
+  const results: RawNews[] = [];
 
-      const text =
-        item.contentSnippet ||
-        item.content ||
-        item.summary ||
-        "Описание отсутствует";
+  for (const item of feed.items.slice(0, 30)) {
+    const title = item.title ? cleanTitle(item.title) : "Без заголовка";
 
-      const image = extractImage(item);
+    const link = item.link;
+    if (!link) continue;
 
-      return {
-        source: feed.title || url,
-        rawTitle: title,
-        rawText: text?.trim(),
-        rawUrl: item.link ?? undefined,
-        rawDate: item.isoDate ?? item.pubDate ?? new Date().toISOString(),
-        rawImage: image,
-      };
-    })
-    .slice(0, 50);
+    // сначала пробуем текст из RSS
+    const rssText =
+      item.contentSnippet ||
+      item.contentEncoded ||
+      item.content ||
+      item.summary ||
+      "";
+
+    // если короткий → идём в статью
+    let fullText = rssText.trim();
+
+    if (fullText.length < 200) {
+      const scraped = await fetchFullText(link);
+      if (scraped.length > 200) {
+        fullText = scraped;
+      }
+    }
+
+    results.push({
+      source: feed.title || url,
+      rawTitle: title,
+      rawText: fullText || "Полный текст недоступен",
+      rawUrl: link,
+      rawDate: item.isoDate ?? item.pubDate ?? new Date().toISOString(),
+      rawImage: extractImage(item),
+    });
+  }
+
+  return results;
 }

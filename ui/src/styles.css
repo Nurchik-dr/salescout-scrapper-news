@@ -31,97 +31,6 @@ a {
 }
 
 /* ================================
-   TOPBAR (как Informburo)
-================================ */
-.topbar {
-  width: 100%;
-  background: var(--red);
-  color: white;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  height: 65px;
-  display: flex;
-  align-items: center;
-}
-
-.topbar-inner {
-  width: 1100px;
-  margin: 0 auto;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 900;
-  font-size: 22px;
-  letter-spacing: 0.2px;
-}
-
-.brand-i {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: white;
-  color: var(--red);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-}
-
-.brand-text {
-  text-transform: lowercase;
-}
-
-.nav {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-left: 14px;
-  flex: 1;
-}
-
-.nav-link {
-  color: white;
-  font-weight: 800;
-  font-size: 13px;
-  opacity: 0.95;
-}
-
-.nav-link:hover {
-  opacity: 1;
-  text-decoration: underline;
-}
-
-.refresh-btn {
-  background: white;
-  color: var(--red);
-  border: none;
-  padding: 10px 14px;
-  font-weight: 900;
-  border-radius: 10px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.refresh-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  opacity: 0.95;
-}
-
-/* ================================
    CONTAINER
 ================================ */
 .container {
@@ -131,31 +40,7 @@ a {
 }
 
 /* ================================
-   TABS
-================================ */
-.tabs {
-  margin: 18px auto;
-  display: flex;
-  gap: 12px;
-}
-
-.tab {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-weight: 900;
-  cursor: pointer;
-  background: #f0f0f0;
-}
-
-.tab.active {
-  background: white;
-  border: 2px solid var(--red);
-}
-
-/* ================================
-   SECTION TITLE "ГЛАВНЫЕ НОВОСТИ"
+   SECTION TITLE
 ================================ */
 .section-title {
   display: flex;
@@ -177,93 +62,51 @@ a {
   font-weight: 900;
   letter-spacing: 0.4px;
 }
-
-/* ================================
-   GRID
-================================ */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+/* =============
+    LAYOUT
+================ */
+.container {
+  width: 1100px;
+  margin: 0 auto;
+  padding: 18px 0 50px;
 }
 
-/* ================================
-   NEWS CARD
-================================ */
-.news-card {
-  background: var(--card);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 14px;
 }
 
-.news-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
-}
-
-.news-image img {
-  width: 100%;
-  height: 190px;
-  object-fit: cover;
-  display: block;
-}
-
-/* ================================
-   CARD CONTENT
-================================ */
-.news-content {
-  padding: 14px;
-}
-
-.news-date {
-  font-size: 12px;
-  color: var(--muted);
-  margin: 0 0 8px;
-}
-
-.news-title {
-  font-size: 16px;
-  font-weight: 900;
-  margin: 0 0 10px;
-  line-height: 1.25;
-}
-
-.news-text {
-  font-size: 14px;
-  color: #333;
-  line-height: 1.4;
-  margin: 0 0 12px;
-  min-height: 40px;
-}
-
-.news-link {
-  font-size: 14px;
-  font-weight: 900;
-  color: var(--red);
-}
-
-.news-link:hover {
-  text-decoration: underline;
-}
-
-/* ================================
-   BADGE NEW
-================================ */
-.badge {
+.section-mark {
+  width: 4px;
+  height: 22px;
   background: var(--red);
-  color: white;
-  font-size: 11px;
-  padding: 3px 7px;
-  border-radius: 6px;
-  margin-left: 8px;
-  vertical-align: middle;
+  border-radius: 2px;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1160px) {
+  .container {
+    width: 94%;
+  }
 }
 
 /* ================================
-   FEED FOOTER
+   RESPONSIVE GLOBAL
 ================================ */
+@media (max-width: 1160px) {
+  .container {
+    width: 94%;
+  }
+}
 .feed-footer {
   padding: 22px 0 0;
   display: flex;
@@ -279,30 +122,4 @@ a {
   border-radius: 999px;
 }
 
-/* ================================
-   RESPONSIVE
-================================ */
-@media (max-width: 1160px) {
-  .topbar-inner,
-  .container {
-    width: 94%;
-  }
-}
 
-@media (max-width: 900px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .nav {
-    display: none;
-  }
-}
-
-@media (max-width: 560px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-  .news-image img {
-    height: 170px;
-  }
-}

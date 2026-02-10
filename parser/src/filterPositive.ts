@@ -1,3 +1,4 @@
+// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/parser/src/filterPositive.ts
 import { NewsItem } from "./types";
 
 const bannedWords = [
@@ -75,3 +76,4 @@ export function filterPositive(news: NewsItem[]): NewsItem[] {
     return false;
   });
 }
+

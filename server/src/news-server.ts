@@ -1,3 +1,4 @@
+// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/server/src/news-server.ts
 import path from "path";
 import dotenv from "dotenv";
 import express from "express";
@@ -7,14 +8,26 @@ import { execSync } from "child_process";
 
 dotenv.config();
 
+// ==========================================
+// ✅ NEWS SCHEMA (with category)
+// ==========================================
 const newsSchema = new Schema(
   {
     source: { type: String, required: true },
+
+    // ✅ NEW
+    category: {
+      type: String,
+      enum: ["general", "sports", "tech", "business", "science"],
+      required: false,
+    },
+
     title: { type: String, required: true },
     text: { type: String, required: false },
     image: { type: String, required: false },
     url: { type: String, required: true },
     publishedAt: { type: String, required: true },
+
     sentiment: {
       type: String,
       enum: ["positive", "neutral", "negative"],
@@ -46,16 +59,48 @@ async function startServer() {
       publishedAt: { $gte: weekAgo.toISOString() },
     };
   }
+  // ==========================================
+  // ✅ SINGLE ARTICLE BY ID
+  // ==========================================
+  app.get("/api/news/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Invalid id" });
+      }
+
+      const item = await NewsModel.findOne({ _id: id }).lean();
+
+      if (!item) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      res.json(item);
+    } catch {
+      res.status(500).json({ error: "Failed to load article" });
+    }
+  });
+
 
   // ==========================================
-  // ✅ ALL NEWS (last 7 days)
+  // ✅ ALL NEWS + CATEGORY FILTER
   // ==========================================
   app.get("/api/news", async (req, res) => {
     try {
       const page = Math.max(1, Number(req.query.page || 1));
       const limit = Math.max(1, Math.min(50, Number(req.query.limit || 15)));
 
-      const filter = last7DaysFilter();
+      const category = String(req.query.category || "all");
+
+      const filter: any = {
+        ...last7DaysFilter(),
+      };
+
+      // ✅ category works now
+      if (category !== "all") {
+        filter.category = category;
+      }
 
       const [items, total] = await Promise.all([
         NewsModel.find(filter)
@@ -75,8 +120,6 @@ async function startServer() {
 
   // ==========================================
   // ✅ POSITIVE FEED
-  // - positivnews.ru показываем всегда
-  // - остальные сайты скрываем если negative
   // ==========================================
   app.get("/api/news/positive", async (req, res) => {
     try {
@@ -87,10 +130,7 @@ async function startServer() {
         ...last7DaysFilter(),
 
         $or: [
-          // ✅ positivnews.ru не фильтруем вообще
           { source: "positivnews.ru" },
-
-          // ✅ остальные сайты → убираем negative
           { sentiment: { $ne: "negative" } },
         ],
       };

@@ -2,19 +2,43 @@ import dotenv from "dotenv";
 import mongoose, { Schema } from "mongoose";
 import { normalize } from "./normalize";
 import { filterPositive } from "./filterPositive";
-import { RawNews } from "./types";
+import { RawNews, NewsItem } from "./types";
 
 dotenv.config();
+
+type Category = "general" | "sports" | "tech" | "business" | "science";
+
+function detectCategory(text: string): Category {
+  const t = text.toLowerCase();
+
+  if (t.includes("спорт") || t.includes("матч") || t.includes("чемпион"))
+    return "sports";
+
+  if (t.includes("технолог") || t.includes("ai") || t.includes("интернет"))
+    return "tech";
+
+  if (t.includes("бизнес") || t.includes("банк") || t.includes("рынок"))
+    return "business";
+
+  if (t.includes("наука") || t.includes("исследован") || t.includes("космос"))
+    return "science";
+
+  return "general";
+}
 
 const newsSchema = new Schema(
   {
     source: { type: String, required: true },
+    category: {
+      type: String,
+      enum: ["general", "sports", "tech", "business", "science"],
+      required: false,
+    },
     title: { type: String, required: true },
     text: { type: String, required: false },
     image: { type: String, required: false },
     url: { type: String, required: true },
     publishedAt: { type: String, required: true },
-    category: { type: String, required: false },
     sentiment: {
       type: String,
       enum: ["positive", "neutral", "negative"],
@@ -40,14 +64,19 @@ async function runParser(): Promise<void> {
   const rawNews = await loadRawNews();
   const normalized = normalize(rawNews);
 
-  const withImagesOnly = normalized.filter((item) => item.image);
+  const withImagesOnly: NewsItem[] = normalized.filter((i) => i.image);
 
-  const positivNews = withImagesOnly.filter((item) =>
-    item.source.includes("positivnews.ru")
+  const categorized: NewsItem[] = withImagesOnly.map((item) => ({
+    ...item,
+    category: detectCategory(`${item.title} ${item.text || ""}`),
+  }));
+
+  const positivNews = categorized.filter((i) =>
+    i.source.includes("positivnews.ru")
   );
 
-  const otherSources = withImagesOnly.filter(
-    (item) => !item.source.includes("positivnews.ru")
+  const otherSources = categorized.filter(
+    (i) => !i.source.includes("positivnews.ru")
   );
 
   const positiveFiltered = filterPositive(otherSources).map((item) => ({
@@ -62,18 +91,18 @@ async function runParser(): Promise<void> {
 
   const finalNews = [...positivAuto, ...positiveFiltered];
 
-  await NewsModel.deleteMany({});
-  await NewsModel.insertMany(finalNews);
+  // ✅ FIX: НЕ удаляем базу → сохраняем старые новости и id
+  for (const item of finalNews) {
+    await NewsModel.updateOne(
+      { url: item.url },
+      { $set: item },
+      { upsert: true }
+    );
+  }
 
-  console.log(`✅ Parsed ${normalized.length} news items`);
-  console.log(`🖼 Saved ONLY with images: ${withImagesOnly.length}`);
-  console.log(`✅ Auto published positivnews.ru: ${positivAuto.length}`);
-  console.log(`✅ Saved ONLY positive: ${finalNews.length}`);
+  console.log("✅ Upsert done (старые новости сохранены)");
 
   await mongoose.disconnect();
 }
 
-runParser().catch((error) => {
-  console.error("❌ Parser failed:", error);
-  process.exit(1);
-});
+runParser().catch(() => process.exit(1));
