@@ -30,14 +30,29 @@ async function extractOgImage(url: string): Promise<string | undefined> {
 
     const $ = cheerio.load(res.data);
 
-    return (
+    let img =
       $('meta[property="og:image"]').attr("content") ||
-      $('meta[name="twitter:image"]').attr("content")
-    );
+      $('meta[name="twitter:image"]').attr("content");
+
+    if (!img) {
+      img =
+        $("article img").first().attr("src") ||
+        $(".post img").first().attr("src") ||
+        $("img").first().attr("src");
+    }
+
+    if (!img) return undefined;
+
+    if (img.startsWith("/")) {
+      img = new URL(url).origin + img;
+    }
+
+    return img;
   } catch {
     return undefined;
   }
 }
+
 
 /* ===========================
    CATEGORY DETECTORS
@@ -158,6 +173,220 @@ export async function scrapeInformburo(): Promise<RawNews[]> {
     new Map(items.map((x) => [x.rawUrl, x])).values()
   ).slice(0, 100);
 
+  const withImages: RawNews[] = [];
+  for (const it of unique) {
+    const img = it.rawUrl ? await extractOgImage(it.rawUrl) : undefined;
+    withImages.push({ ...it, rawImage: img });
+  }
+
+  return withImages;
+}
+
+/* ===========================
+   ✅ KHABAR.KZ
+=========================== */
+
+function detectKhabarCategory(href: string): string {
+  if (href.includes("/sport")) return "Спорт";
+  if (href.includes("/economy")) return "Экономика";
+  if (href.includes("/culture")) return "Культура";
+  if (href.includes("/society")) return "Общество";
+  if (href.includes("/world")) return "Мир";
+  if (href.includes("/politics")) return "Политика";
+  return "Новости";
+}
+
+export async function scrapeKhabar(): Promise<RawNews[]> {
+  const $ = await fetchHtml("https://khabar.kz/ru/news");
+  const items: RawNews[] = [];
+
+  // ссылки на новости
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href") || "";
+    const title = $(el).text().trim();
+
+    if (!href) return;
+    if (!title) return;
+    if (title.length < 20) return;
+
+    // ✅ khabar news links only
+    if (!href.includes("/ru/news/")) return;
+
+    const link = href.startsWith("http") ? href : "https://khabar.kz" + href;
+
+    items.push({
+      source: "khabar.kz",
+      rawTitle: title,
+      rawUrl: link,
+      rawDate: new Date().toISOString(),
+      rawCategory: detectKhabarCategory(href),
+    });
+  });
+
+  const unique = Array.from(
+    new Map(items.map((x) => [x.rawUrl, x])).values()
+  ).slice(0, 80);
+
+  const withImages: RawNews[] = [];
+  for (const it of unique) {
+    const img = it.rawUrl ? await extractOgImage(it.rawUrl) : undefined;
+    withImages.push({ ...it, rawImage: img });
+  }
+
+  return withImages;
+}
+
+/* ===========================
+   ✅ ZAKON.KZ
+=========================== */
+
+export async function scrapeZakon(): Promise<RawNews[]> {
+  const $ = await fetchHtml("https://www.zakon.kz/");
+  const items: RawNews[] = [];
+
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href") || "";
+    const title = $(el).text().trim();
+
+    if (!title || title.length < 20) return;
+    if (!href.includes(".html")) return;
+
+    const link = href.startsWith("http")
+      ? href
+      : "https://www.zakon.kz" + href;
+
+    items.push({
+      source: "zakon.kz",
+      rawTitle: title,
+      rawUrl: link,
+      rawDate: new Date().toISOString(),
+      rawCategory: "Новости",
+    });
+  });
+
+  const unique = Array.from(
+    new Map(items.map((x) => [x.rawUrl, x])).values()
+  ).slice(0, 60);
+
+  // ✅ вытаскиваем картинки через og:image
+  const withImages: RawNews[] = [];
+  for (const it of unique) {
+    const img = it.rawUrl ? await extractOgImage(it.rawUrl) : undefined;
+    withImages.push({ ...it, rawImage: img });
+  }
+
+  return withImages;
+}
+
+/* ===========================
+   ✅ POSITIVNEWS.RU
+=========================== */
+
+export async function scrapePositivNews(): Promise<RawNews[]> {
+  const $ = await fetchHtml("https://positivnews.ru/");
+  const items: RawNews[] = [];
+
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href") || "";
+    const title = $(el).text().trim();
+
+    // титулы короткие не нужны
+    if (!title || title.length < 20) return;
+
+    // ссылки на статьи обычно содержат www.positivnews.ru
+    if (!href.includes("positivnews.ru")) return;
+
+    const link = href.startsWith("http") ? href : "https://positivnews.ru" + href;
+
+    items.push({
+      source: "positivnews.ru",
+      rawTitle: title,
+      rawUrl: link,
+      rawDate: new Date().toISOString(),
+      rawCategory: "Позитив",
+    });
+  });
+
+  const unique = Array.from(
+    new Map(items.map((x) => [x.rawUrl, x])).values()
+  ).slice(0, 80);
+
+  const withImages: RawNews[] = [];
+  for (const it of unique) {
+    const img = it.rawUrl ? await extractOgImage(it.rawUrl) : undefined;
+    withImages.push({ ...it, rawImage: img });
+  }
+
+  return withImages;
+}
+
+
+/* ===========================
+   ✅ SPUTNIK.KZ
+=========================== */
+
+export async function scrapeSputnik(): Promise<RawNews[]> {
+  const $ = await fetchHtml("https://sputniknews.kz/");
+  const items: RawNews[] = [];
+
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href") || "";
+    const title = $(el).text().trim();
+
+    if (!title || title.length < 20) return;
+    if (!href.includes("/news/")) return;
+
+    const link = href.startsWith("http")
+      ? href
+      : "https://sputniknews.kz" + href;
+
+    items.push({
+      source: "sputniknews.kz",
+      rawTitle: title,
+      rawUrl: link,
+      rawDate: new Date().toISOString(),
+      rawCategory: "Новости",
+    });
+  });
+
+  return Array.from(new Map(items.map((x) => [x.rawUrl, x])).values()).slice(
+    0,
+    80
+  );
+}
+
+/* ===========================
+   ✅ TENGRINEWS.KZ
+=========================== */
+
+export async function scrapeTengrinews(): Promise<RawNews[]> {
+  const $ = await fetchHtml("https://tengrinews.kz/news/");
+  const items: RawNews[] = [];
+
+  $("a[href*='/news/']").each((_, el) => {
+    const href = $(el).attr("href") || "";
+    const title = $(el).text().trim();
+
+    if (!title || title.length < 20) return;
+
+    const link = href.startsWith("http")
+      ? href
+      : "https://tengrinews.kz" + href;
+
+    items.push({
+      source: "tengrinews.kz",
+      rawTitle: title,
+      rawUrl: link,
+      rawDate: new Date().toISOString(),
+      rawCategory: "Новости",
+    });
+  });
+
+  const unique = Array.from(
+    new Map(items.map((x) => [x.rawUrl, x])).values()
+  ).slice(0, 60);
+
+  // ✅ вытаскиваем картинки через og:image
   const withImages: RawNews[] = [];
   for (const it of unique) {
     const img = it.rawUrl ? await extractOgImage(it.rawUrl) : undefined;

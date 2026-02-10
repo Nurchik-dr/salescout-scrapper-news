@@ -56,11 +56,14 @@ export async function scrapeTelegram(): Promise<RawNews[]> {
       console.log(`📥 Loading channel: @${ch}`);
 
       const entity = await client.getEntity(ch);
-      const messages = await client.getMessages(entity, { limit: 20 });
+
+      // ✅ берём много постов
+      const messages = await client.getMessages(entity, { limit: 50 });
 
       for (const msg of messages) {
         if (!msg.message) continue;
 
+        // ✅ НИКАКОГО фильтра тут
         results.push({
           source: `telegram:@${ch}`,
           rawTitle: msg.message.slice(0, 80),
@@ -74,10 +77,9 @@ export async function scrapeTelegram(): Promise<RawNews[]> {
     }
   }
 
-  console.log("💾 SESSION (вставь в .env чтобы не логиниться снова):");
+  console.log("💾 SESSION:");
   console.log(client.session.save());
 
-  // ✅ FIX TIMEOUT
   await client.destroy();
   await client.disconnect();
 

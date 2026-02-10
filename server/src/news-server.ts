@@ -36,7 +36,7 @@ async function startServer() {
   app.use(express.json());
 
   // ==========================================
-  // ✅ ONLY LAST 7 DAYS FILTER
+  // ✅ ONLY LAST 7 DAYS
   // ==========================================
   function last7DaysFilter() {
     const weekAgo = new Date();
@@ -49,7 +49,6 @@ async function startServer() {
 
   // ==========================================
   // ✅ ALL NEWS (last 7 days)
-  // GET /api/news?page=1&limit=15
   // ==========================================
   app.get("/api/news", async (req, res) => {
     try {
@@ -69,14 +68,15 @@ async function startServer() {
       ]);
 
       res.json({ page, limit, total, items });
-    } catch (e) {
+    } catch {
       res.status(500).json({ error: "Failed to load news" });
     }
   });
 
   // ==========================================
-  // ✅ POSITIVE NEWS (last 7 days + no negative)
-  // GET /api/news/positive?page=1&limit=15
+  // ✅ POSITIVE FEED
+  // - positivnews.ru показываем всегда
+  // - остальные сайты скрываем если negative
   // ==========================================
   app.get("/api/news/positive", async (req, res) => {
     try {
@@ -85,7 +85,14 @@ async function startServer() {
 
       const filter = {
         ...last7DaysFilter(),
-        sentiment: { $ne: "negative" },
+
+        $or: [
+          // ✅ positivnews.ru не фильтруем вообще
+          { source: "positivnews.ru" },
+
+          // ✅ остальные сайты → убираем negative
+          { sentiment: { $ne: "negative" } },
+        ],
       };
 
       const [items, total] = await Promise.all([
@@ -99,7 +106,7 @@ async function startServer() {
       ]);
 
       res.json({ page, limit, total, items });
-    } catch (e) {
+    } catch {
       res.status(500).json({ error: "Failed to load positive news" });
     }
   });

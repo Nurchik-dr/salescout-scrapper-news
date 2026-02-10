@@ -12,5 +12,3 @@ export function normalize(raw: RawNews[]): NewsItem[] {
     category: item.rawCategory || "Новости", // ✅ FIX
   }));
 }
-
-

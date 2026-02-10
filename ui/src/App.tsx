@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NewsItem } from "./types/news";
 
-// import Header from "./components/Header";
-import Tabs from "./components/Tabs";
 import NewsList from "./components/NewsList";
 import "./styles.css";
 import Navbar from "./components/NavBar/NavBar";
@@ -16,17 +14,15 @@ type ApiResponse = {
 
 export default function App() {
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [mode, setMode] = useState<"all" | "positive">("all");
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState("Новости");
 
   const [page, setPage] = useState(1);
-  const limit = 15;
+  const limit = 30;
 
   const [total, setTotal] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
 
-  // ✅ hasMore работает даже если total ещё не пришёл
   const hasMore = useMemo(() => {
     if (total === 0) return true;
     return news.length < total;
@@ -34,58 +30,42 @@ export default function App() {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  function endpointFor(p: number) {
-    const base =
-      mode === "all"
-        ? "http://localhost:4000/api/news"
-        : "http://localhost:4000/api/news/positive";
+  async function load(reset = false) {
+    if (isFetching) return;
+    if (!reset && !hasMore) return;
 
-    return `${base}?page=${p}&limit=${limit}&category=${category}`;
-  }
+    setIsFetching(true);
 
+    try {
+      const nextPage = reset ? 1 : page;
 
+      // ✅ всегда берём только позитивный фид (сервер мы поправим на следующем шаге)
+      const endpoint = `http://localhost:4000/api/news?page=${nextPage}&limit=${limit}&category=${encodeURIComponent(
+        category
+      )}`;
 
-  // ui/src/App.tsx (фикс кнопки Positive)
+      const res = await fetch(endpoint);
+      const data: ApiResponse = await res.json();
 
-async function load(reset = false) {
-  if (isFetching) return;
-  if (!reset && !hasMore) return;
+      setTotal(data.total || 0);
 
-  setIsFetching(true);
-
-  try {
-    const nextPage = reset ? 1 : page;
-
-    const endpoint =
-      mode === "all"
-        ? `http://localhost:4000/api/news?page=${nextPage}&limit=${limit}`
-        : `http://localhost:4000/api/news/positive?page=${nextPage}&limit=${limit}`;
-
-    const res = await fetch(endpoint);
-    const data: ApiResponse = await res.json();
-
-    setTotal(data.total || 0);
-
-    if (reset) {
-      setNews(data.items || []);
-      setPage(2);
-    } else {
-      setNews((prev) => [...prev, ...(data.items || [])]);
-      setPage((p) => p + 1);
+      if (reset) {
+        setNews(data.items || []);
+        setPage(2);
+      } else {
+        setNews((prev) => [...prev, ...(data.items || [])]);
+        setPage((p) => p + 1);
+      }
+    } finally {
+      setIsFetching(false);
     }
-  } finally {
-    setIsFetching(false);
   }
-}
-
 
   async function refresh() {
     setLoading(true);
 
     try {
-      await fetch("http://localhost:4000/api/refresh", {
-        method: "POST",
-      });
+      await fetch("http://localhost:4000/api/refresh", { method: "POST" });
 
       setNews([]);
       setTotal(0);
@@ -97,7 +77,6 @@ async function load(reset = false) {
     }
   }
 
-  // reset при смене вкладки
   useEffect(() => {
     setNews([]);
     setTotal(0);
@@ -105,8 +84,6 @@ async function load(reset = false) {
     load(true);
   }, [category]);
 
-
-  // infinite scroll
   useEffect(() => {
     const el = bottomRef.current;
     if (!el) return;
@@ -123,16 +100,18 @@ async function load(reset = false) {
 
     io.observe(el);
     return () => io.disconnect();
-  }, [hasMore, isFetching, page, mode]);
+  }, [hasMore, isFetching, page]);
 
   return (
     <div className="page">
-      <Navbar active={category} setActive={setCategory} loading={loading} onRefresh={refresh}  />
-      {/* <Header loading={loading} onRefresh={refresh} /> */}
+      <Navbar
+        active={category}
+        setActive={setCategory}
+        loading={loading}
+        onRefresh={refresh}
+      />
 
       <div className="container">
-        {/* <Tabs mode={mode} setMode={setMode} /> */}
-
         <div className="section-title">
           <span className="section-mark" />
           <h2>ГЛАВНЫЕ НОВОСТИ</h2>

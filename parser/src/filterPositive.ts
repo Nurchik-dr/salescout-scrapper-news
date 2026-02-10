@@ -1,38 +1,77 @@
-import { NewsItem } from './types';
+import { NewsItem } from "./types";
 
-const positiveWords = ['успех', 'открыли', 'помогли', 'добро', 'счастье'];
-const negativeWords = [
-  "авария",
-  "дтп",
-  "опрокинулся",
+const bannedWords = [
   "погиб",
-  "погибли",
-  "смерть",
-  "умер",
-  "убийство",
-  "нападение",
-  "катастрофа",
-  "пожар",
+  "смерт",
+  "убий",
+  "авари",
+  "дтп",
+  "катастроф",
   "взрыв",
-  "война",
-  "трагедия",
-  "преступление",
+  "пожар",
+  "трагед",
+  "войн",
   "арест",
-  "мошенник",
+  "задерж",
+  "мвд",
+  "прокуратур",
+  "нарколаборат",
+  "преступлен",
+  "мошеннич",
+  "пирамида",
+  "коррупц",
+  "инфаркт",
+  "может стоить жизни",
 ];
-function countMatches(text: string, words: string[]): number {
-  const lower = text.toLowerCase();
-  return words.reduce(
-    (count, word) => count + (lower.includes(word) ? 1 : 0),
-    0,
-  );
+
+// ❌ Мусорные темы
+const trashWords = [
+  "гороскоп",
+  "зодиак",
+  "везунчик",
+  "астролог",
+];
+
+// ✅ Позитивные темы (оставляем)
+const goodTopics = [
+  "спорт",
+  "побед",
+  "чемпион",
+  "турнир",
+  "технолог",
+  "искусственный интеллект",
+  "открыли",
+  "новый парк",
+  "волонт",
+  "помог",
+  "фестиваль",
+  "концерт",
+  "культура",
+  "образован",
+  "здоровье",
+  "бег",
+  "экология",
+  "природа",
+];
+
+function hasAny(text: string, words: string[]) {
+  return words.some((w) => text.includes(w));
 }
 
 export function filterPositive(news: NewsItem[]): NewsItem[] {
   return news.filter((item) => {
-    const content = `${item.title} ${item.text}`;
-    const positiveScore = countMatches(content, positiveWords);
-    const negativeScore = countMatches(content, negativeWords);
-    return positiveScore > negativeScore;
+    const content = `${item.title} ${item.text || ""}`.toLowerCase();
+
+    // ❌ убираем жесть
+    if (hasAny(content, bannedWords)) return false;
+
+    // ❌ убираем мусор
+    if (hasAny(content, trashWords)) return false;
+
+    // ✅ оставляем только если есть полезная тема
+    if (hasAny(content, goodTopics)) return true;
+
+    // всё остальное скрываем
+    return false;
   });
 }

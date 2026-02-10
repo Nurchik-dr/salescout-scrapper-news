@@ -2,32 +2,9 @@ import dotenv from "dotenv";
 import mongoose, { Schema } from "mongoose";
 import { normalize } from "./normalize";
 import { filterPositive } from "./filterPositive";
-import { NewsItem, RawNews } from "./types";
+import { RawNews } from "./types";
 
 dotenv.config();
-
-const positiveWords = ["успех", "открыли", "помогли", "добро", "счастье"];
-
-const negativeWords = [
-  "авария",
-  "дтп",
-  "опрокинулся",
-  "погиб",
-  "погибли",
-  "задыхается",
-  "смерть",
-  "умер",
-  "убийство",
-  "нападение",
-  "катастрофа",
-  "пожар",
-  "взрыв",
-  "война",
-  "трагедия",
-  "преступление",
-  "арест",
-  "мошенник",
-];
 
 const newsSchema = new Schema(
   {
@@ -37,8 +14,7 @@ const newsSchema = new Schema(
     image: { type: String, required: false },
     url: { type: String, required: true },
     publishedAt: { type: String, required: true },
-    
-    category: { type: String, required: false }, // ✅ ADD
+    category: { type: String, required: false },
     sentiment: {
       type: String,
       enum: ["positive", "neutral", "negative"],
@@ -48,61 +24,51 @@ const newsSchema = new Schema(
   { collection: "news", timestamps: true }
 );
 
+const NewsModel = mongoose.models.News || mongoose.model("News", newsSchema);
 
-
-const NewsModel =
-  mongoose.models.News || mongoose.model("News", newsSchema);
-
-// ===================================================
-// ✅ Sentiment строгий: негатив сразу режем
-// ===================================================
-function getSentiment(item: NewsItem): "positive" | "neutral" | "negative" {
-  const content = `${item.title} ${item.text}`.toLowerCase();
-
-  if (negativeWords.some((w) => content.includes(w))) return "negative";
-  if (positiveWords.some((w) => content.includes(w))) return "positive";
-
-  return "neutral";
-}
-
-// ===================================================
-// ✅ Load raw_news from Mongo
-// ===================================================
 async function loadRawNews(): Promise<RawNews[]> {
   const RawModel = mongoose.connection.collection("raw_news");
   const docs = await RawModel.find({}).toArray();
   return docs as unknown as RawNews[];
 }
 
-// ===================================================
-// ✅ Main parser
-// ===================================================
 async function runParser(): Promise<void> {
   await mongoose.connect(
     process.env.MONGO_URI || "mongodb://localhost:27017/positive_news"
   );
 
   const rawNews = await loadRawNews();
-
   const normalized = normalize(rawNews);
 
-  const withSentiment = normalized.map((item) => ({
+  const withImagesOnly = normalized.filter((item) => item.image);
+
+  const positivNews = withImagesOnly.filter((item) =>
+    item.source.includes("positivnews.ru")
+  );
+
+  const otherSources = withImagesOnly.filter(
+    (item) => !item.source.includes("positivnews.ru")
+  );
+
+  const positiveFiltered = filterPositive(otherSources).map((item) => ({
     ...item,
-    sentiment: getSentiment(item),
+    sentiment: "positive" as const,
   }));
 
-  if (withSentiment.length > 0) {
-    // ✅ очищаем старое (иначе фото не обновится)
-    await NewsModel.deleteMany({});
+  const positivAuto = positivNews.map((item) => ({
+    ...item,
+    sentiment: "positive" as const,
+  }));
 
-    // ✅ вставляем заново
-    await NewsModel.insertMany(withSentiment);
-  }
+  const finalNews = [...positivAuto, ...positiveFiltered];
 
-  const positiveNews = filterPositive(normalized);
+  await NewsModel.deleteMany({});
+  await NewsModel.insertMany(finalNews);
 
   console.log(`✅ Parsed ${normalized.length} news items`);
-  console.log(`✅ Positive news count: ${positiveNews.length}`);
+  console.log(`🖼 Saved ONLY with images: ${withImagesOnly.length}`);
+  console.log(`✅ Auto published positivnews.ru: ${positivAuto.length}`);
+  console.log(`✅ Saved ONLY positive: ${finalNews.length}`);
 
   await mongoose.disconnect();
 }
