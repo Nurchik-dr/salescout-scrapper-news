@@ -9,8 +9,8 @@ type NavbarProps = {
 
 const navItems: { label: string; category?: NewsCategory; to?: string }[] = [
   { label: "Главная", category: "all", to: "/" },
-  { label: "Видео" },
-  { label: "Политика" },
+  { label: "Видео", category: "all", to: "/" },
+  { label: "Политика", category: "all", to: "/" },
   { label: "Бизнес", category: "business", to: "/category/business" },
   { label: "Технологии", category: "tech", to: "/category/tech" },
   { label: "Наука", category: "science", to: "/category/science" },
@@ -30,11 +30,11 @@ export default function Navbar({ activeCategory, onSelectCategory }: NavbarProps
     <header className="site-header">
       <div className="top-strip">
         <div className="container top-strip-inner">
-          <span className="top-strip-text">"NEW" ПОЗИТИВНЫЕ НОВОСТИ PODCAST</span>
+          <span className="top-strip-text">"НОВОЕ" ПОЗИТИВНЫЕ НОВОСТИ</span>
           <div className="top-links">
-            <a href="#contacts">Contact</a>
-            <a href="#">Advertise</a>
-            <a href="#">Privacy</a>
+            <a href="#contacts">Контакты</a>
+            <a href="#">Реклама</a>
+            <a href="#">Конфиденциальность</a>
           </div>
         </div>
       </div>

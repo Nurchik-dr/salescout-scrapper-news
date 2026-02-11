@@ -16,7 +16,7 @@ export default function NewsList({ title, items, categoryRoute, compact = true }
         <h2>{title}</h2>
         {categoryRoute && categoryRoute !== "all" && (
           <Link className="view-all" to={`/category/${categoryRoute}`}>
-            View All
+            Смотреть все
           </Link>
         )}
       </div>

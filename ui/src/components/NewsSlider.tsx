@@ -13,7 +13,7 @@ export default function NewsSlider({ items }: NewsSliderProps) {
   if (!slides.length) {
     return (
       <section className="hero-empty panel">
-        <h2>LATEST NEWS</h2>
+        <h2>ПОСЛЕДНИЕ НОВОСТИ</h2>
         <p>Загрузка материалов...</p>
       </section>
     );
@@ -25,7 +25,7 @@ export default function NewsSlider({ items }: NewsSliderProps) {
     <section className="hero-slider">
       <img src={activeSlide.image || "/no-image.png"} alt={activeSlide.title} className="hero-image" />
       <div className="hero-overlay">
-        <p className="hero-title-tag">LATEST NEWS</p>
+        <p className="hero-title-tag">ПОСЛЕДНИЕ НОВОСТИ</p>
         <h1>{activeSlide.title}</h1>
         <p className="hero-date">{formatDate(activeSlide.publishedAt)}</p>
         <a href={activeSlide.url} target="_blank" rel="noreferrer" className="read-more">

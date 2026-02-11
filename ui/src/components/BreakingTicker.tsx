@@ -23,7 +23,7 @@ export default function BreakingTicker({ items }: BreakingTickerProps) {
   return (
     <section className="breaking-ticker">
       <div className="container breaking-inner">
-        <strong className="breaking-title">BREAKING NEWS</strong>
+        <strong className="breaking-title">СРОЧНЫЕ НОВОСТИ</strong>
 
         <div className="ticker-track">
           {visible.map((item) => (

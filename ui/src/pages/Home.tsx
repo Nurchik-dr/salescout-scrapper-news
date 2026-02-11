@@ -27,21 +27,21 @@ export default function Home({ items, category, onCategoryChange }: HomeProps) {
   return (
     <div className="container main-layout">
       <aside className="column left-column">
-        <NewsList title="Latest News" items={latest} categoryRoute="tech" />
-        <NewsList title="Funny Post's" items={funny} categoryRoute="science" />
+        <NewsList title="Последние новости" items={latest} categoryRoute="tech" />
+        <NewsList title="Забавные новости" items={funny} categoryRoute="science" />
 
         <section className="panel subscribe-panel">
-          <h2>Get breaking news and enter to win gear!</h2>
-          <input type="text" placeholder="Name" />
+          <h2>Подпишитесь, чтобы получать срочные новости!</h2>
+          <input type="text" placeholder="Имя" />
           <input type="email" placeholder="Email" />
-          <button type="button">SUBMIT</button>
+          <button type="button">Отправить</button>
         </section>
 
         <section className="panel social-panel">
-          <h2>BUSSPO ON FACEBOOK</h2>
-          <div className="social-placeholder">Facebook Widget</div>
-          <h2>BUSSPO ON TWITTER</h2>
-          <div className="social-placeholder">Twitter Widget</div>
+          <h2>Мы в Facebook</h2>
+          <div className="social-placeholder">Виджет Facebook</div>
+          <h2>Мы в Twitter</h2>
+          <div className="social-placeholder">Виджет Twitter</div>
         </section>
       </aside>
 
@@ -49,15 +49,15 @@ export default function Home({ items, category, onCategoryChange }: HomeProps) {
         <NewsSlider items={filtered} />
 
         <div className="section-grid">
-          <NewsList title="Interesting Post's" items={interesting} categoryRoute="business" compact={false} />
-          <NewsList title="Awesome Post's" items={awesome} categoryRoute="tech" />
+          <NewsList title="Интересные новости" items={interesting} categoryRoute="business" compact={false} />
+          <NewsList title="Главное" items={awesome} categoryRoute="tech" />
         </div>
 
         <section className="panel videos-panel">
           <div className="panel-header">
-            <h2>Our Videos</h2>
+            <h2>Наши видео</h2>
             <Link to="/category/science" className="view-all">
-              View All
+              Смотреть все
             </Link>
           </div>
           <div className="videos-grid">
@@ -68,7 +68,7 @@ export default function Home({ items, category, onCategoryChange }: HomeProps) {
         </section>
 
         <div className="section-grid">
-          <NewsList title="Useful Post's" items={useful} categoryRoute="science" compact={false} />
+          <NewsList title="Полезные новости" items={useful} categoryRoute="science" compact={false} />
           <section className="panel category-filter-panel">
             <h2>Категории</h2>
             <div className="filter-buttons">
@@ -96,8 +96,8 @@ export default function Home({ items, category, onCategoryChange }: HomeProps) {
       </main>
 
       <aside className="column right-column">
-        <NewsList title="Awesome Posts" items={awesome} categoryRoute="business" />
-        <NewsList title="Useful Posts" items={useful} categoryRoute="science" compact={false} />
+        <NewsList title="Популярное" items={awesome} categoryRoute="business" />
+        <NewsList title="Полезное" items={useful} categoryRoute="science" compact={false} />
       </aside>
     </div>
   );

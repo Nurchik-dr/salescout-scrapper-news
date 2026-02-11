@@ -9,6 +9,10 @@ import type { ApiNewsItem, NewsApiResponse, NewsCategory } from "./types/news";
 import { toCategory } from "./types/news";
 import "./styles.css";
 
+const API_CANDIDATES = ["http://localhost:3001/api/news", "http://localhost:4000/api/news"];
+
+type NewsLikeResponse = NewsApiResponse | { items?: ApiNewsItem[]; page?: number; limit?: number; total?: number };
+
 export default function App() {
   const [news, setNews] = useState<ApiNewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,18 +23,36 @@ export default function App() {
     const controller = new AbortController();
 
     const loadNews = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("http://localhost:3001/api/news", { signal: controller.signal });
-        const data: NewsApiResponse = await response.json();
-        setNews(data.items ?? []);
-      } catch (error) {
-        if ((error as Error).name !== "AbortError") {
-          setNews([]);
+      setLoading(true);
+
+      for (const endpoint of API_CANDIDATES) {
+        try {
+          const response = await fetch(endpoint, { signal: controller.signal });
+          if (!response.ok) {
+            continue;
+          }
+
+          const data = (await response.json()) as NewsLikeResponse;
+          const items = Array.isArray(data.items) ? data.items : [];
+
+          if (items.length > 0) {
+            setNews(items);
+            setLoading(false);
+            return;
+          }
+
+          setNews(items);
+          setLoading(false);
+          return;
+        } catch (error) {
+          if ((error as Error).name === "AbortError") {
+            return;
+          }
         }
-      } finally {
-        setLoading(false);
       }
+
+      setNews([]);
+      setLoading(false);
     };
 
     void loadNews();
