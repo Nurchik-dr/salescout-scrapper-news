@@ -115,9 +115,11 @@ async function runParser(): Promise<void> {
   const rawNews = await loadRawNews();
   const normalized = normalize(rawNews);
 
-  const withImagesOnly: NewsItem[] = normalized.filter((i) => i.image);
+  // Не отбрасываем новости без изображения: на фронте есть заглушка.
+  // Иначе в ленте может быть пусто, если источники вернули материалы без картинок.
+  const validItems: NewsItem[] = normalized.filter((item) => Boolean(item.url));
 
-  const categorized: NewsItem[] = withImagesOnly.map((item) => ({
+  const categorized: NewsItem[] = validItems.map((item) => ({
     ...item,
     category: detectCategory(`${item.title} ${item.text || ""}`),
   }));
