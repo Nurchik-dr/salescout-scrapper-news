@@ -14,9 +14,9 @@ type Props = {
 
 export default function HomePage({ news, active, setActive }: Props) {
   const featured = news[0];
-  const recentNews = news.slice(1, 6);
-  const warNews = news.slice(6, 11);
-  const technologyNews = news.filter((item) => item.category === "tech").slice(0, 5);
+  const recentNews = news.slice(1, 5);
+  const warNews = news.slice(5, 10);
+  const technologyNews = news.filter((item) => item.category === "tech").slice(0, 4);
 
   return (
     <div className="nb-page">
@@ -28,7 +28,7 @@ export default function HomePage({ news, active, setActive }: Props) {
           <NewsGrid recentNews={recentNews} warNews={warNews} />
         </section>
 
-        <Sidebar technologyNews={technologyNews.length ? technologyNews : news.slice(0, 5)} allNews={news} />
+        <Sidebar technologyNews={technologyNews.length ? technologyNews : news.slice(0, 4)} allNews={news} />
       </main>
     </div>
   );
