@@ -1,4 +1,4 @@
-// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/server/src/news-server.ts
+// server/src/news-server.ts
 import path from "path";
 import dotenv from "dotenv";
 import express from "express";
@@ -9,13 +9,12 @@ import { execSync } from "child_process";
 dotenv.config();
 
 // ==========================================
-// ✅ NEWS SCHEMA (with category)
+// ✅ NEWS SCHEMA
 // ==========================================
 const newsSchema = new Schema(
   {
     source: { type: String, required: true },
 
-    // ✅ NEW
     category: {
       type: String,
       enum: ["general", "sports", "tech", "business", "science"],
@@ -59,8 +58,9 @@ async function startServer() {
       publishedAt: { $gte: weekAgo.toISOString() },
     };
   }
+
   // ==========================================
-  // ✅ SINGLE ARTICLE BY ID
+  // ✅ SINGLE ARTICLE
   // ==========================================
   app.get("/api/news/:id", async (req, res) => {
     try {
@@ -71,10 +71,7 @@ async function startServer() {
       }
 
       const item = await NewsModel.findOne({ _id: id }).lean();
-
-      if (!item) {
-        return res.status(404).json({ error: "Not found" });
-      }
+      if (!item) return res.status(404).json({ error: "Not found" });
 
       res.json(item);
     } catch {
@@ -82,25 +79,17 @@ async function startServer() {
     }
   });
 
-
   // ==========================================
-  // ✅ ALL NEWS + CATEGORY FILTER
+  // ✅ ALL NEWS
   // ==========================================
   app.get("/api/news", async (req, res) => {
     try {
       const page = Math.max(1, Number(req.query.page || 1));
       const limit = Math.max(1, Math.min(50, Number(req.query.limit || 15)));
-
       const category = String(req.query.category || "all");
 
-      const filter: any = {
-        ...last7DaysFilter(),
-      };
-
-      // ✅ category works now
-      if (category !== "all") {
-        filter.category = category;
-      }
+      const filter: any = { ...last7DaysFilter() };
+      if (category !== "all") filter.category = category;
 
       const [items, total] = await Promise.all([
         NewsModel.find(filter)
@@ -108,7 +97,6 @@ async function startServer() {
           .skip((page - 1) * limit)
           .limit(limit)
           .lean(),
-
         NewsModel.countDocuments(filter),
       ]);
 
@@ -126,13 +114,9 @@ async function startServer() {
       const page = Math.max(1, Number(req.query.page || 1));
       const limit = Math.max(1, Math.min(50, Number(req.query.limit || 15)));
 
-      const filter = {
+      const filter: any = {
         ...last7DaysFilter(),
-
-        $or: [
-          { source: "positivnews.ru" },
-          { sentiment: { $ne: "negative" } },
-        ],
+        sentiment: "positive",
       };
 
       const [items, total] = await Promise.all([
@@ -141,7 +125,6 @@ async function startServer() {
           .skip((page - 1) * limit)
           .limit(limit)
           .lean(),
-
         NewsModel.countDocuments(filter),
       ]);
 
@@ -158,21 +141,25 @@ async function startServer() {
     try {
       console.log("🔄 Refresh started...");
 
+      // absolute paths from server folder
+      const scraperPath = path.resolve(__dirname, "../../scraper");
+      const parserPath = path.resolve(__dirname, "../../parser");
+
       execSync("npm run start", {
-        cwd: path.resolve(process.cwd(), "../scraper"),
+        cwd: scraperPath,
         stdio: "inherit",
       });
 
       execSync("npm run start", {
-        cwd: path.resolve(process.cwd(), "../parser"),
+        cwd: parserPath,
         stdio: "inherit",
       });
 
       console.log("✅ Refresh done!");
       res.json({ ok: true });
-    } catch (e) {
-      console.log("❌ Refresh failed:", e);
-      res.status(500).json({ ok: false });
+    } catch (e: any) {
+      console.log("❌ Refresh failed:", e?.message || e);
+      res.status(500).json({ ok: false, error: String(e?.message || e) });
     }
   });
 

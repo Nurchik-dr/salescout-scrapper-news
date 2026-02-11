@@ -1,23 +1,47 @@
+/* /src/components/NewsCard/NewsCard.css */
+
 .news-card {
   background: var(--card);
-  border-radius: 14px;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  cursor: pointer;
+  transition: 0.18s ease;
+  height: 100%;
 }
 
 .news-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
 }
 
-.news-image img {
+/* IMAGE */
+.news-image {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* ✅ DEFAULT карточки (обычные снизу) */
+.news-card.default .news-image img {
   width: 100%;
   height: 190px;
   object-fit: cover;
   display: block;
 }
 
+/* ✅ HERO карточки (верхний grid) */
+.news-card.hero {
+  width: 100%;
+  height: 100%;
+}
+
+.news-card.hero .news-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* DEFAULT CARD CONTENT */
 .news-content {
   padding: 14px;
 }
@@ -40,7 +64,6 @@
   color: #333;
   line-height: 1.4;
   margin: 0 0 12px;
-  min-height: 40px;
 }
 
 .news-link {
@@ -56,6 +79,41 @@
   text-decoration: underline;
 }
 
+/* HERO CARD (TOP GRID) */
+.news-card.hero .news-content {
+  display: none;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.75),
+    rgba(0, 0, 0, 0)
+  );
+}
+
+.hero-date {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 6px;
+}
+
+.hero-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: white;
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* BADGE */
 .badge {
   background: var(--red);
   color: white;
@@ -63,4 +121,87 @@
   padding: 3px 7px;
   border-radius: 6px;
   margin-left: 8px;
+}
+
+.news-card.hero {
+  width: 100%;
+  height: 100%;
+}
+
+.news-card.hero .news-image {
+  width: 100%;
+  height: 100%;
+}
+
+.news-card.hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* HERO titles always visible */
+.news-card.hero .hero-title {
+  font-size: 16px;
+}
+
+/* Главная новость крупнее */
+.div1 .hero-title {
+  font-size: 22px;
+}
+
+/* Средние блоки */
+.div2 .hero-title,
+.div3 .hero-title {
+  font-size: 17px;
+}
+
+/* Маленькие */
+.div6 .hero-title,
+.div7 .hero-title {
+  font-size: 14px;
+}
+
+/* ===========================
+   HERO FIX (ALL TITLES VISIBLE)
+=========================== */
+
+.news-card.hero {
+  width: 100%;
+  height: 100%;
+}
+
+.news-card.hero .news-image {
+  width: 100%;
+  height: 100%;
+}
+
+.news-card.hero .news-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Overlay always bottom */
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8),
+    rgba(0, 0, 0, 0)
+  );
+}
+
+.hero-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: white;
+  margin: 0;
+  line-height: 1.2;
 }

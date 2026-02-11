@@ -1,0 +1,165 @@
+/* /src/screens/FeedScreen/FeedScreen.css */
+
+/* ===========================
+   GRID LAYOUT (FEED)
+=========================== */
+
+.layout {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px 20px 50px;
+
+  display: grid;
+  grid-template-columns: 10% 78% 10%;
+  gap: 20px;
+  align-items: start;
+}
+
+/* MAIN CENTER */
+.main {
+  width: 100%;
+}
+
+/* SIDEBARS */
+.sidebar {
+  width: 100%;
+  top: 90px;
+  position: sticky;
+}
+
+.widget-title {
+  font-size: 15px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.widget-box {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* ===========================
+   TOP GRID FIX
+=========================== */
+
+.grid-item {
+  height: 100%;
+  display: flex;
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+
+@media (max-width: 1200px) {
+  .layout {
+    grid-template-columns: 220px 1fr 220px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: relative;
+    top: 0;
+  }
+
+  .left {
+    order: 2;
+  }
+
+  .main {
+    order: 1;
+  }
+
+  .right {
+    order: 3;
+  }
+}
+/* ===========================
+   TOP GRID (MAIN FIX)
+=========================== */
+
+.top-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+
+  /* ВОТ ЭТО ГЛАВНОЕ */
+  grid-template-rows: repeat(5, 130px);
+
+  gap: 14px;
+}
+
+.grid-item {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* позиции как макет */
+
+.div1 {
+  grid-column: span 2;
+  grid-row: span 3;
+}
+
+.div2 {
+  grid-row: span 3;
+  grid-column-start: 3;
+}
+
+.div3 {
+  grid-column: span 2;
+  grid-row: span 2;
+  grid-column-start: 4;
+}
+
+.div4 {
+  grid-row: span 3;
+  grid-column-start: 4;
+  grid-row-start: 3;
+}
+
+.div5 {
+  grid-row: span 3;
+  grid-column-start: 5;
+  grid-row-start: 3;
+}
+
+.div6 {
+  grid-column: span 2;
+  grid-row: span 2;
+  grid-column-start: 2;
+  grid-row-start: 4;
+}
+
+.div7 {
+  grid-row: span 2;
+  grid-column-start: 1;
+  grid-row-start: 4;
+}
+
+
+.grid-item {
+  height: 100%;
+}
+
+.grid-item .news-card {
+  height: 100%;
+}
+
+.grid-item {
+  overflow: hidden;
+}
+
+.grid-item .news-card {
+  height: 100%;
+}

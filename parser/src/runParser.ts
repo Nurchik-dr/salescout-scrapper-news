@@ -1,3 +1,4 @@
+// parser/src/runParser.ts
 import dotenv from "dotenv";
 import mongoose, { Schema } from "mongoose";
 import { normalize } from "./normalize";
@@ -5,6 +6,34 @@ import { filterPositive } from "./filterPositive";
 import { RawNews, NewsItem } from "./types";
 
 dotenv.config();
+
+/* ===========================
+   TRANSLATE (RU <-> KZ)
+=========================== */
+
+async function translateText(text: string, target: "ru" | "kk") {
+  try {
+    const res = await fetch("https://libretranslate.com/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        q: text,
+        source: "auto",
+        target,
+        format: "text",
+      }),
+    });
+
+    const data: any = await res.json();
+    return data.translatedText || text;
+  } catch {
+    return text;
+  }
+}
+
+/* ===========================
+   CATEGORY
+=========================== */
 
 type Category = "general" | "sports" | "tech" | "business" | "science";
 
@@ -26,19 +55,33 @@ function detectCategory(text: string): Category {
   return "general";
 }
 
+/* ===========================
+   SCHEMA
+=========================== */
+
 const newsSchema = new Schema(
   {
     source: { type: String, required: true },
+
     category: {
       type: String,
       enum: ["general", "sports", "tech", "business", "science"],
       required: false,
     },
+
     title: { type: String, required: true },
     text: { type: String, required: false },
+
+    // ✅ translations
+    titleRu: { type: String, required: false },
+    titleKk: { type: String, required: false },
+    textRu: { type: String, required: false },
+    textKk: { type: String, required: false },
+
     image: { type: String, required: false },
     url: { type: String, required: true },
     publishedAt: { type: String, required: true },
+
     sentiment: {
       type: String,
       enum: ["positive", "neutral", "negative"],
@@ -50,11 +93,19 @@ const newsSchema = new Schema(
 
 const NewsModel = mongoose.models.News || mongoose.model("News", newsSchema);
 
+/* ===========================
+   LOAD RAW
+=========================== */
+
 async function loadRawNews(): Promise<RawNews[]> {
   const RawModel = mongoose.connection.collection("raw_news");
   const docs = await RawModel.find({}).toArray();
   return docs as unknown as RawNews[];
 }
+
+/* ===========================
+   MAIN PARSER
+=========================== */
 
 async function runParser(): Promise<void> {
   await mongoose.connect(
@@ -71,38 +122,84 @@ async function runParser(): Promise<void> {
     category: detectCategory(`${item.title} ${item.text || ""}`),
   }));
 
+  // ✅ positivnews.ru всегда positive
   const positivNews = categorized.filter((i) =>
     i.source.includes("positivnews.ru")
   );
 
+  // ✅ остальные источники
   const otherSources = categorized.filter(
     (i) => !i.source.includes("positivnews.ru")
   );
 
-  const positiveFiltered = filterPositive(otherSources).map((item) => ({
+  // ✅ positive = что прошло фильтр
+  const positiveList = filterPositive(otherSources);
+
+  const positiveFiltered = positiveList.map((item) => ({
     ...item,
     sentiment: "positive" as const,
   }));
 
+  // ✅ neutral = всё остальное
+  const positiveUrls = new Set(positiveList.map((x) => x.url));
+
+  const neutralFiltered = otherSources
+    .filter((x) => !positiveUrls.has(x.url))
+    .map((item) => ({
+      ...item,
+      sentiment: "neutral" as const,
+    }));
+
+  // ✅ positivnews авто-positive
   const positivAuto = positivNews.map((item) => ({
     ...item,
     sentiment: "positive" as const,
   }));
 
-  const finalNews = [...positivAuto, ...positiveFiltered];
+  // ✅ итог только positive + neutral
+  const finalNews = [...positivAuto, ...positiveFiltered, ...neutralFiltered];
 
-  // ✅ FIX: НЕ удаляем базу → сохраняем старые новости и id
+  // ===========================
+  // ✅ TRANSLATE BEFORE SAVE
+  // ===========================
+
   for (const item of finalNews) {
+    const titleRu = await translateText(item.title, "ru");
+    const titleKk = await translateText(item.title, "kk");
+
+    const textRu = item.text ? await translateText(item.text, "ru") : "";
+    const textKk = item.text ? await translateText(item.text, "kk") : "";
+
     await NewsModel.updateOne(
       { url: item.url },
-      { $set: item },
+      {
+        $set: {
+          ...item,
+          titleRu,
+          titleKk,
+          textRu,
+          textKk,
+        },
+      },
       { upsert: true }
     );
   }
 
-  console.log("✅ Upsert done (старые новости сохранены)");
+  console.log("✅ Upsert done + translations saved");
 
   await mongoose.disconnect();
 }
 
-runParser().catch(() => process.exit(1));
+/* ===========================
+   RUN
+=========================== */
+
+runParser()
+  .then(() => {
+    console.log("✅ Parser finished нормально");
+    process.exit(0);
+  })
+  .catch((e) => {
+    console.error("❌ Parser crashed:", e);
+    process.exit(1);
+  });

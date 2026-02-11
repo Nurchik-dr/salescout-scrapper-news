@@ -25,7 +25,6 @@ const bannedWords = [
   "может стоить жизни",
 ];
 
-// ❌ Мусорные темы
 const trashWords = [
   "гороскоп",
   "зодиак",
@@ -33,15 +32,16 @@ const trashWords = [
   "астролог",
 ];
 
-// ✅ Позитивные темы (оставляем)
 const goodTopics = [
   "спорт",
   "побед",
   "чемпион",
   "турнир",
+  "рекорд",
   "технолог",
   "искусственный интеллект",
   "открыли",
+  "запустили",
   "новый парк",
   "волонт",
   "помог",
@@ -50,9 +50,11 @@ const goodTopics = [
   "культура",
   "образован",
   "здоровье",
-  "бег",
   "экология",
   "природа",
+  "стартап",
+  "инновац",
+  "грант",
 ];
 
 function hasAny(text: string, words: string[]) {
@@ -63,17 +65,16 @@ export function filterPositive(news: NewsItem[]): NewsItem[] {
   return news.filter((item) => {
     const content = `${item.title} ${item.text || ""}`.toLowerCase();
 
-    // ❌ убираем жесть
+    // ❌ жесть убираем всегда
     if (hasAny(content, bannedWords)) return false;
 
-    // ❌ убираем мусор
+    // ❌ мусор убираем
     if (hasAny(content, trashWords)) return false;
 
-    // ✅ оставляем только если есть полезная тема
+    // ✅ positive только если реально хорошая тема
     if (hasAny(content, goodTopics)) return true;
 
-    // всё остальное скрываем
+    // ❌ всё остальное не считаем позитивом
     return false;
   });
 }
-

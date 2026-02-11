@@ -1,9 +1,10 @@
-// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/ui/src/screens/FeedScreen/FeedScreen.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NewsItem } from "../../types/news";
 
 import Navbar from "../../components/NavBar/NavBar";
 import NewsList from "../../components/NewsList/NewsList";
+import NewsCard from "../../components/NewsCard/NewsCard";
+import "./FeedScreen.css";
 
 type ApiResponse = {
   page: number;
@@ -102,6 +103,9 @@ export default function FeedScreen() {
     return () => io.disconnect();
   }, [hasMore, isFetching, page]);
 
+  const topNews = news.slice(0, 7);
+  const restNews = news.slice(7);
+
   return (
     <div className="page">
       <Navbar
@@ -111,27 +115,63 @@ export default function FeedScreen() {
         onRefresh={refresh}
       />
 
-      <div className="container">
-        <div className="section-title">
-          <span className="section-mark" />
-          <h2>ГЛАВНЫЕ НОВОСТИ</h2>
-        </div>
+      <div className="layout">
+        {/* LEFT */}
+        <aside className="sidebar left">
+          <h3 className="widget-title">💱 Курс валют</h3>
+          <div className="widget-box">
+            USD: 492.00 ₸ <br />
+            EUR: 583.00 ₸ <br />
+            RUB: 6.10 ₸
+          </div>
+        </aside>
 
-        <NewsList news={news} />
+        {/* MAIN */}
+        <main className="main">
+          <div className="section-title">
+            <span className="section-mark" />
+            <h2>ГЛАВНЫЕ НОВОСТИ</h2>
+          </div>
 
-        <div className="feed-footer">
-          {isFetching && <div className="feed-status">Загрузка...</div>}
+          {/* ✅ TOP GRID */}
+          <div className="top-grid">
+            {topNews.map((item, index) => (
+              <div key={item._id} className={`grid-item div${index + 1}`}>
+                <NewsCard item={item} variant="hero" />
+              </div>
+            ))}
+          </div>
 
-          {!isFetching && !hasMore && news.length > 0 && (
-            <div className="feed-status">Это всё ✅</div>
-          )}
+          {/* ✅ Остальные новости */}
+          <div className="rest-news">
+            <NewsList news={restNews} />
+          </div>
 
-          {!isFetching && news.length === 0 && (
-            <div className="feed-status">Нет новостей</div>
-          )}
-        </div>
+          {/* FOOTER */}
+          <div className="feed-footer">
+            {isFetching && <div className="feed-status">Загрузка...</div>}
 
-        <div ref={bottomRef} style={{ height: 1 }} />
+            {!isFetching && !hasMore && news.length > 0 && (
+              <div className="feed-status">Это всё ✅</div>
+            )}
+
+            {!isFetching && news.length === 0 && (
+              <div className="feed-status">Нет новостей</div>
+            )}
+          </div>
+
+          <div ref={bottomRef} style={{ height: 1 }} />
+        </main>
+
+        {/* RIGHT */}
+        <aside className="sidebar right">
+          <h3 className="widget-title">⛅ Погода</h3>
+          <div className="widget-box">
+            Алматы <br />
+            +1°C <br />
+            Ветер: 4 км/ч
+          </div>
+        </aside>
       </div>
     </div>
   );

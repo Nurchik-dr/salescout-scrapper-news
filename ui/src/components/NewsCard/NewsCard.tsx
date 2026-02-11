@@ -1,29 +1,16 @@
-// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/ui/src/components/NewsCard.tsx
+// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/ui/src/components/NewsCard/NewsCard.tsx
 import { useNavigate } from "react-router-dom";
 import { NewsItem } from "../../types/news";
-import "./NewsCard.css"
+import "./NewsCard.css";
+
 type Props = {
   item: NewsItem;
+  variant?: "default" | "hero";
 };
 
 function isNew(publishedAt: string) {
   const diff = Date.now() - new Date(publishedAt).getTime();
   return diff < 1000 * 60 * 60 * 6;
-}
-
-function categoryLabel(cat?: string) {
-  switch (cat) {
-    case "sports":
-      return "";
-    case "tech":
-      return "";
-    case "business":
-      return "";
-    case "science":
-      return "";
-    default:
-      return "";
-  }
 }
 
 const FALLBACK_IMG =
@@ -35,7 +22,7 @@ const FALLBACK_IMG =
       font-family="Arial" font-size="42" fill="#9aa3ad">NEWS</text>
   </svg>`);
 
-export default function NewsCard({ item }: Props) {
+export default function NewsCard({ item, variant = "default" }: Props) {
   const navigate = useNavigate();
 
   const img =
@@ -43,46 +30,65 @@ export default function NewsCard({ item }: Props) {
 
   return (
     <article
-      className="news-card"
+      className={`news-card ${variant}`}
       onClick={() => navigate(`/article/${item._id}`)}
-      style={{ cursor: "pointer" }}
     >
+      {/* IMAGE */}
       <div className="news-image">
         <img src={img} alt={item.title} loading="lazy" />
+
+        {/* OVERLAY TITLE for HERO */}
+        {variant === "hero" && (
+          <div className="hero-overlay">
+            <p className="hero-date">
+              {new Date(item.publishedAt).toLocaleString("ru-RU", {
+                day: "2-digit",
+                month: "long",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+
+            <h3 className="hero-title">
+              {item.title}
+              {isNew(item.publishedAt) && <span className="badge">NEW</span>}
+            </h3>
+          </div>
+        )}
       </div>
 
-      <div className="news-content">
-        <div className="news-category">{categoryLabel(item.category)}</div>
+      {/* NORMAL CONTENT */}
+      {variant === "default" && (
+        <div className="news-content">
+          <p className="news-date">
+            {new Date(item.publishedAt).toLocaleString("ru-RU", {
+              day: "2-digit",
+              month: "long",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
 
-        <p className="news-date">
-          {new Date(item.publishedAt).toLocaleString("ru-RU", {
-            day: "2-digit",
-            month: "long",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
+          <h3 className="news-title">
+            {item.title}
+            {isNew(item.publishedAt) && <span className="badge">NEW</span>}
+          </h3>
 
-        <h3 className="news-title">
-          {item.title}
-          {isNew(item.publishedAt) && <span className="badge">NEW</span>}
-        </h3>
+          <p className="news-text">
+            {item.text ? item.text.slice(0, 120) + "..." : ""}
+          </p>
 
-        <p className="news-text">
-          {item.text ? item.text.slice(0, 140) + "..." : "Описание отсутствует"}
-        </p>
-
-        <button
-          className="news-link"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/article/${item._id}`);
-          }}
-        >
-          Читать →
-        </button>
-      </div>
+          <button
+            className="news-link"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/article/${item._id}`);
+            }}
+          >
+            Читать →
+          </button>
+        </div>
+      )}
     </article>
   );
 }
-

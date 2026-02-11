@@ -19,4 +19,7 @@ export type NewsItem = {
   publishedAt: string;
   category?: Category;
   sentiment?: "positive" | "neutral" | "negative";
+
+  titleKz?: string;
+  textKz?: string;
 };
