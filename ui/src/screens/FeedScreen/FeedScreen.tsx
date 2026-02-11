@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { NewsItem } from "../../types/news";
-
-import Navbar from "../../components/NavBar/NavBar";
-import NewsList from "../../components/NewsList/NewsList";
-import NewsCard from "../../components/NewsCard/NewsCard";
-import "./FeedScreen.css";
+import type { NewsItem } from "../../types/news";
+import HomePage from "../../components/HomePage/HomePage";
 
 type ApiResponse = {
   page: number;
@@ -15,22 +11,17 @@ type ApiResponse = {
 
 export default function FeedScreen() {
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(false);
-
   const [category, setCategory] = useState("all");
-
   const [page, setPage] = useState(1);
-  const limit = 30;
-
   const [total, setTotal] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
+  const limit = 30;
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const hasMore = useMemo(() => {
     if (total === 0) return true;
     return news.length < total;
   }, [news.length, total]);
-
-  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   async function load(reset = false) {
     if (isFetching) return;
@@ -40,14 +31,9 @@ export default function FeedScreen() {
 
     try {
       const nextPage = reset ? 1 : page;
-
-      const endpoint = `http://localhost:4000/api/news?page=${nextPage}&limit=${limit}&category=${encodeURIComponent(
-        category
-      )}`;
-
+      const endpoint = `http://localhost:4000/api/news?page=${nextPage}&limit=${limit}&category=${encodeURIComponent(category)}`;
       const res = await fetch(endpoint);
       const data: ApiResponse = await res.json();
-
       setTotal(data.total || 0);
 
       if (reset) {
@@ -55,26 +41,10 @@ export default function FeedScreen() {
         setPage(2);
       } else {
         setNews((prev) => [...prev, ...(data.items || [])]);
-        setPage((p) => p + 1);
+        setPage((prev) => prev + 1);
       }
     } finally {
       setIsFetching(false);
-    }
-  }
-
-  async function refresh() {
-    setLoading(true);
-
-    try {
-      await fetch("http://localhost:4000/api/refresh", { method: "POST" });
-
-      setNews([]);
-      setTotal(0);
-      setPage(1);
-
-      await load(true);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -96,83 +66,17 @@ export default function FeedScreen() {
           load(false);
         }
       },
-      { rootMargin: "600px" }
+      { rootMargin: "650px" }
     );
 
     io.observe(el);
     return () => io.disconnect();
-  }, [hasMore, isFetching, page]);
-
-  const topNews = news.slice(0, 7);
-  const restNews = news.slice(7);
+  }, [hasMore, isFetching]);
 
   return (
-    <div className="page">
-      <Navbar
-        active={category}
-        setActive={setCategory}
-        loading={loading}
-        onRefresh={refresh}
-      />
-
-      <div className="layout">
-        {/* LEFT */}
-        <aside className="sidebar left">
-          <h3 className="widget-title">💱 Курс валют</h3>
-          <div className="widget-box">
-            USD: 492.00 ₸ <br />
-            EUR: 583.00 ₸ <br />
-            RUB: 6.10 ₸
-          </div>
-        </aside>
-
-        {/* MAIN */}
-        <main className="main">
-          <div className="section-title">
-            <span className="section-mark" />
-            <h2>ГЛАВНЫЕ НОВОСТИ</h2>
-          </div>
-
-          {/* ✅ TOP GRID */}
-          <div className="top-grid">
-            {topNews.map((item, index) => (
-              <div key={item._id} className={`grid-item div${index + 1}`}>
-                <NewsCard item={item} variant="hero" />
-              </div>
-            ))}
-          </div>
-
-          {/* ✅ Остальные новости */}
-          <div className="rest-news">
-            <NewsList news={restNews} />
-          </div>
-
-          {/* FOOTER */}
-          <div className="feed-footer">
-            {isFetching && <div className="feed-status">Загрузка...</div>}
-
-            {!isFetching && !hasMore && news.length > 0 && (
-              <div className="feed-status">Это всё ✅</div>
-            )}
-
-            {!isFetching && news.length === 0 && (
-              <div className="feed-status">Нет новостей</div>
-            )}
-          </div>
-
-          <div ref={bottomRef} style={{ height: 1 }} />
-        </main>
-
-        {/* RIGHT */}
-        <aside className="sidebar right">
-          <h3 className="widget-title">⛅ Погода</h3>
-          <div className="widget-box">
-            Алматы <br />
-            +1°C <br />
-            Ветер: 4 км/ч
-          </div>
-        </aside>
-      </div>
-    </div>
+    <>
+      <HomePage news={news} active={category} setActive={setCategory} />
+      <div ref={bottomRef} style={{ height: 1 }} />
+    </>
   );
 }
