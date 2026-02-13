@@ -13,12 +13,14 @@ import { scrape24kz } from "./24kz";
 import { scrapeTimeKz } from "./timekz";
 
 import { scrapeNewtimes } from "./newtimes";
-import { scrapeLada } from "./lada";
 import { scrapeMgorod } from "./mgorod";
 import { scrapeOtyrar } from "./otyrar";
 import { scrapeDigitalbusiness } from "./digitalbusiness";
+import { scrapeSportnews } from "./sportnews";
+import { scrapeAstanaHub } from "./astanahub";
 
 export const kzScrapers = [
+  scrapeSportnews,
   scrapeNur,
   scrapeInformburo,
   scrapeTengrinews,
@@ -28,12 +30,11 @@ export const kzScrapers = [
   scrapeSputnik,
 
   scrapeLiter,
-
+  scrapeAstanaHub,
   scrape24kz,
   scrapeTimeKz,
 
   scrapeNewtimes,
-  scrapeLada,
   scrapeMgorod,
   scrapeOtyrar,
   scrapeDigitalbusiness,

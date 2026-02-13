@@ -1,11 +1,14 @@
-// /Users/mac/Desktop/salescout-scrapper-codex-create-positive-news-feed-aggregator/ui/src/types/news.ts
+// ui/src/types/news.ts
 export type NewsItem = {
   _id: string;
+  source: string;
+  category?: string;
   title: string;
-  text: string;
+  text?: string;
+  image?: string;
   url: string;
   publishedAt: string;
-  image?: string;
   sentiment: "positive" | "neutral" | "negative";
-  category?: "general" | "sports" | "tech" | "business" | "science";
+  createdAt?: string;
+  updatedAt?: string;
 };

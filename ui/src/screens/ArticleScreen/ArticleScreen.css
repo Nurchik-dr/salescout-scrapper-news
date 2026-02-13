@@ -1,0 +1,50 @@
+/* ui/src/screens/ArticleScreen/ArticleScreen.css */
+.article-page {
+  background: #f3f4f6;
+  min-height: 100vh;
+  padding: 40px 0;
+}
+
+.article-container {
+  max-width: 760px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  border: 1px solid #e5e7eb;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.article-meta {
+  color: #9ca3af;
+  margin: 10px 0 20px;
+}
+
+.article-text {
+  font-size: 16px;
+  line-height: 1.65;
+  color: #111827;
+}
+
+.source {
+  display: inline-block;
+  margin-top: 25px;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.source:hover {
+  text-decoration: underline;
+}

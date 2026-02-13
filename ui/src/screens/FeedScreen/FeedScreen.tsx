@@ -1,10 +1,9 @@
+// ui/src/screens/FeedScreen/FeedScreen.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NewsItem } from "../../types/news";
-
-import Navbar from "../../components/NavBar/NavBar";
-import NewsList from "../../components/NewsList/NewsList";
-import NewsCard from "../../components/NewsCard/NewsCard";
 import "./FeedScreen.css";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/NavBar/NavBar";
 
 type ApiResponse = {
   page: number;
@@ -13,26 +12,37 @@ type ApiResponse = {
   items: NewsItem[];
 };
 
+function formatMetaDate(date: string) {
+  return new Date(date).toLocaleString("ru-RU", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function FeedScreen() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [category, setCategory] = useState("all");
+  const [region, setRegion] = useState<"kz" | "world">("kz");
 
   const [page, setPage] = useState(1);
-  const limit = 30;
-
   const [total, setTotal] = useState(0);
+
   const [isFetching, setIsFetching] = useState(false);
+
+  const navigate = useNavigate();
+  const limit = 25;
+
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
   const hasMore = useMemo(() => {
     if (total === 0) return true;
     return news.length < total;
   }, [news.length, total]);
 
-  const bottomRef = useRef<HTMLDivElement | null>(null);
-
-  async function load(reset = false) {
+  async function loadNext(reset = false) {
     if (isFetching) return;
     if (!reset && !hasMore) return;
 
@@ -41,21 +51,23 @@ export default function FeedScreen() {
     try {
       const nextPage = reset ? 1 : page;
 
-      const endpoint = `http://localhost:4000/api/news?page=${nextPage}&limit=${limit}&category=${encodeURIComponent(
-        category
-      )}`;
+      const res = await fetch(
+        `http://localhost:4000/api/news?page=${nextPage}&limit=${limit}&region=${region}`
+      );
 
-      const res = await fetch(endpoint);
       const data: ApiResponse = await res.json();
-
       setTotal(data.total || 0);
 
       if (reset) {
         setNews(data.items || []);
         setPage(2);
       } else {
-        setNews((prev) => [...prev, ...(data.items || [])]);
-        setPage((p) => p + 1);
+        setNews((prev) => {
+          const merged = [...prev, ...(data.items || [])];
+          return Array.from(new Map(merged.map((x) => [x.url, x])).values());
+        });
+
+        setPage((prev) => prev + 1);
       }
     } finally {
       setIsFetching(false);
@@ -68,11 +80,19 @@ export default function FeedScreen() {
     try {
       await fetch("http://localhost:4000/api/refresh", { method: "POST" });
 
-      setNews([]);
-      setTotal(0);
-      setPage(1);
+      const res = await fetch(
+        `http://localhost:4000/api/news?page=1&limit=${limit}&region=${region}`
+      );
 
-      await load(true);
+      const data: ApiResponse = await res.json();
+
+      setNews((prev) => {
+        const merged = [...(data.items || []), ...prev];
+        return Array.from(new Map(merged.map((x) => [x.url, x])).values());
+      });
+
+      setTotal(data.total || 0);
+      setPage(2);
     } finally {
       setLoading(false);
     }
@@ -82,97 +102,94 @@ export default function FeedScreen() {
     setNews([]);
     setTotal(0);
     setPage(1);
-    load(true);
-  }, [category]);
+    loadNext(true);
+  }, [region]);
 
   useEffect(() => {
-    const el = bottomRef.current;
-    if (!el) return;
+    loadNext(true);
+  }, []);
 
-    const io = new IntersectionObserver(
+  useEffect(() => {
+    if (!loaderRef.current) return;
+
+    const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting && hasMore && !isFetching) {
-          load(false);
+        if (entries[0].isIntersecting) {
+          loadNext(false);
         }
       },
-      { rootMargin: "600px" }
+      { threshold: 1 }
     );
 
-    io.observe(el);
-    return () => io.disconnect();
-  }, [hasMore, isFetching, page]);
+    observer.observe(loaderRef.current);
 
-  const topNews = news.slice(0, 7);
-  const restNews = news.slice(7);
+    return () => observer.disconnect();
+  }, [hasMore, page, isFetching, region]);
+
+  const sortedNews = useMemo(() => {
+    return [...news].sort(
+      (a, b) =>
+        new Date(b.publishedAt || "").getTime() -
+        new Date(a.publishedAt || "").getTime()
+    );
+  }, [news]);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("feed-scroll");
+    if (saved) {
+      window.scrollTo(0, Number(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      sessionStorage.setItem("feed-scroll", String(window.scrollY));
+    };
+
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <div className="page">
-      <Navbar
-        active={category}
-        setActive={setCategory}
-        loading={loading}
-        onRefresh={refresh}
-      />
+    <div className="feed-page">
 
-      <div className="layout">
-        {/* LEFT */}
-        <aside className="sidebar left">
-          <h3 className="widget-title">💱 Курс валют</h3>
-          <div className="widget-box">
-            USD: 492.00 ₸ <br />
-            EUR: 583.00 ₸ <br />
-            RUB: 6.10 ₸
-          </div>
-        </aside>
+      <main className="feed-main">
+        {sortedNews.map((item) => (
+          <article
+            key={item._id}
+            className="feed-item"
+            onClick={() => navigate(`/news/${item._id}`)}
+          >
+            <div className="feed-item-content">
+              <h3>{item.title}</h3>
 
-        {/* MAIN */}
-        <main className="main">
-          <div className="section-title">
-            <span className="section-mark" />
-            <h2>ГЛАВНЫЕ НОВОСТИ</h2>
-          </div>
+              <p className="feed-preview">
+                {item.text?.slice(0, 120) || "Читать полностью →"}
+              </p>
 
-          {/* ✅ TOP GRID */}
-          <div className="top-grid">
-            {topNews.map((item, index) => (
-              <div key={item._id} className={`grid-item div${index + 1}`}>
-                <NewsCard item={item} variant="hero" />
+              <div className="feed-item-meta">
+                <span>● {formatMetaDate(item.publishedAt)}</span>
               </div>
-            ))}
-          </div>
+            </div>
+          </article>
+        ))}
 
-          {/* ✅ Остальные новости */}
-          <div className="rest-news">
-            <NewsList news={restNews} />
-          </div>
+        <div ref={loaderRef} style={{ height: 40 }} />
 
-          {/* FOOTER */}
-          <div className="feed-footer">
-            {isFetching && <div className="feed-status">Загрузка...</div>}
+        <div className="feed-footer">
+          {isFetching && (
+            <div className="feed-status">Загрузка новостей...</div>
+          )}
 
-            {!isFetching && !hasMore && news.length > 0 && (
-              <div className="feed-status">Это всё ✅</div>
-            )}
+          {!hasMore && news.length > 0 && (
+            <div className="feed-status">Вы просмотрели все новости</div>
+          )}
 
-            {!isFetching && news.length === 0 && (
-              <div className="feed-status">Нет новостей</div>
-            )}
-          </div>
-
-          <div ref={bottomRef} style={{ height: 1 }} />
-        </main>
-
-        {/* RIGHT */}
-        <aside className="sidebar right">
-          <h3 className="widget-title">⛅ Погода</h3>
-          <div className="widget-box">
-            Алматы <br />
-            +1°C <br />
-            Ветер: 4 км/ч
-          </div>
-        </aside>
-      </div>
+          {!isFetching && news.length === 0 && (
+            <div className="feed-status">Пока нет новостей</div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

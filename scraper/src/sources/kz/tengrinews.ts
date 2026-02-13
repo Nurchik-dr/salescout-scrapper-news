@@ -6,11 +6,14 @@ import { clamp } from "../../core/limits";
 import { parseFullArticle } from "../../core/article";
 
 export async function scrapeTengrinews(): Promise<RawNews[]> {
-  const base = "https://tengrinews.kz/news/";
+  const base = "https://tengrinews.kz/";
   const $ = await fetchHtml(base);
 
   const items: RawNews[] = [];
-  $("a[href*='/news/']").each((_, el) => {
+
+  $(
+    "a[href*='/kazakhstan_news/'], a[href*='/world_news/'], a[href*='/business_news/'], a[href*='/sport_news/']"
+  ).each((_, el) => {
     const href = $(el).attr("href") || "";
     const title = $(el).text().trim();
 
@@ -18,13 +21,16 @@ export async function scrapeTengrinews(): Promise<RawNews[]> {
 
     const link = absUrl(base, href);
 
+    const region = href.includes("/kazakhstan_news/") ? "kz" : "world";
+
     items.push({
       source: "tengrinews.kz",
       rawTitle: title,
       rawUrl: link,
       rawDate: new Date().toISOString(),
       rawCategory: "Новости",
-    });
+      region,
+    } as any);
   });
 
   const unique = Array.from(new Map(items.map((x) => [x.rawUrl, x])).values());
@@ -33,9 +39,18 @@ export async function scrapeTengrinews(): Promise<RawNews[]> {
   for (const it of limited) {
     if (!it.rawUrl) continue;
     const full = await parseFullArticle(it.rawUrl, {
-      text: [".content_main_text p", "article p"],
-      image: ['meta[property="og:image"]', "article img"],
-      date: ['meta[property="article:published_time"]', "time[datetime]"],
+      text: [
+        ".content_main_text p",
+        "article .text p",
+        "div.article_text p",
+        "div.text p",
+      ],
+      image: ['meta[property="og:image"]', "article img", ".main_image img"],
+      date: [
+        'meta[property="article:published_time"]',
+        "time[datetime]",
+        ".date time",
+      ],
     });
     if (full?.text) it.rawText = full.text;
     if (full?.image) it.rawImage = full.image;
